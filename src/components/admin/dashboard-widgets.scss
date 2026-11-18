@@ -22,7 +22,7 @@
 }
 
 // Title wraps instead of truncating, so the location after the menu name stays
-// readable on narrow cards; the header link keeps to one line beside it.
+// readable on narrow cards; the pencil button stays at the header's right edge.
 .lolev-widget__title {
   min-width: 0;
   overflow-wrap: anywhere;
@@ -35,8 +35,6 @@
 .lolev-widget__header-link {
   flex-shrink: 0;
   margin-left: auto;
-  font-size: var(--text-body-small-font-size);
-  white-space: nowrap;
 }
 
 // Secondary one-line summary under the header.

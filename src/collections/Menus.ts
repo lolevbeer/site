@@ -291,38 +291,34 @@ export const Menus: CollectionConfig = {
               type: 'array',
               required: true,
               admin: {
-                initCollapsed: false,
+                // One line per item, price and promotion behind a toggle.
+                components: { Field: '@/src/components/admin/MenuItemsField#MenuItemsField' },
                 description:
                   'Leave a product blank for an empty tap. Items may appear only once. Cans save newest recipe first, followed by other items.',
               },
+              // MenuItemsField puts `product` on the item's line and the rest under its toggle.
               fields: [
                 {
-                  type: 'row',
-                  fields: [
-                    {
-                      name: 'product',
-                      type: 'relationship',
-                      relationTo: ['beers', 'products'],
-                      required: false,
-                      admin: {
-                        width: '66%',
-                        sortOptions: {
-                          beers: 'name',
-                          products: 'name',
-                        },
-                      },
-                      label: 'Beer / other menu item',
+                  name: 'product',
+                  type: 'relationship',
+                  relationTo: ['beers', 'products'],
+                  required: false,
+                  admin: {
+                    sortOptions: {
+                      beers: 'name',
+                      products: 'name',
                     },
-                    {
-                      name: 'price',
-                      type: 'text',
-                      admin: {
-                        description: 'Blank means no override; use the catalog price.',
-                        width: '33%',
-                      },
-                      label: 'Display price override',
-                    },
-                  ],
+                  },
+                  label: 'Beer / other menu item',
+                },
+                {
+                  name: 'price',
+                  type: 'text',
+                  admin: {
+                    description: 'Blank means no override; use the catalog price.',
+                    width: '33%',
+                  },
+                  label: 'Display price override',
                 },
                 {
                   name: 'promotion',
@@ -331,6 +327,7 @@ export const Menus: CollectionConfig = {
                   admin: {
                     condition: (data) => data?.type === 'cans',
                     description: 'Optional promotion shown only on the fullscreen can menu.',
+                    width: '66%',
                   },
                   label: 'Promotion text',
                 },

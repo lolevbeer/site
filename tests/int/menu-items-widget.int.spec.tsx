@@ -9,6 +9,16 @@ import { MenuItems } from '@/src/components/admin/MenuItems'
 
 // Vite's PostCSS config cannot load in vitest; the widget's styles are not under test.
 
+// Payload's Button, reduced to the props the widget passes: a link only with el="link".
+vi.mock('@payloadcms/ui', () => ({
+  Button: ({ el, to, icon, tooltip, 'aria-label': label }: Record<string, string>) =>
+    el === 'link' ? (
+      <a href={to} aria-label={label} data-icon={icon} data-tooltip={tooltip} />
+    ) : (
+      <button aria-label={label} data-icon={icon} data-tooltip={tooltip} />
+    ),
+}))
+
 const findByID = vi.fn()
 const req = { payload: { findByID, config: { routes: { admin: '/admin' } } } }
 
@@ -47,6 +57,14 @@ describe('MenuItems widget', () => {
     const html = await render({ menu: 'menu-1' })
     expect(html).toMatch(/<h3[^>]*>.*Taproom.*Lawrenceville.*<\/h3>/)
     expect(html).toContain('<p class="lolev-widget__meta">2 items</p>')
+  })
+
+  it('opens the menu editor from a pencil icon button, not a text link', async () => {
+    const html = await render({ menu: 'menu-1' })
+    expect(html).toContain(
+      '<a href="/admin/collections/menus/menu-1" aria-label="Edit menu: Taproom" data-icon="edit" data-tooltip="Edit menu"></a>',
+    )
+    expect(html).not.toContain('>Edit menu<')
   })
 
   it('links each row to its admin edit page', async () => {

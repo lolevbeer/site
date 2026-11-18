@@ -3,6 +3,7 @@
  * widget's settings), each linking to its admin edit page. Renders Payload's
  * widget-card markup plus the shared dashboard-widgets.scss layout classes.
  */
+import { Button } from '@payloadcms/ui'
 import Link from 'next/link'
 import type { WidgetServerProps } from 'payload'
 import { formatAdminURL } from 'payload/shared'
@@ -73,7 +74,7 @@ export async function MenuItems({ req, widgetData }: WidgetServerProps<MenuItems
         <h3 className="widget-card__title lolev-widget__title">
           {menu ? (
             // The location sits in the title: every taproom has a "Draft Beer" menu.
-            <Link href={adminURL('menus', menu.id)}>
+            <Link href={adminURL('menus', menu.id)} prefetch={false}>
               {menu.name}
               {locationName && (
                 <span className="lolev-widget__title-location"> · {locationName}</span>
@@ -84,13 +85,18 @@ export async function MenuItems({ req, widgetData }: WidgetServerProps<MenuItems
           )}
         </h3>
         {menu && (
-          <Link
+          // Payload's pencil, as on its own edit buttons; a gear would read as widget settings.
+          <Button
             className="lolev-widget__header-link"
-            href={adminURL('menus', menu.id)}
+            buttonStyle="ghost"
+            el="link"
+            icon="edit"
+            margin={false}
+            round
+            to={adminURL('menus', menu.id)}
+            tooltip="Edit menu"
             aria-label={`Edit menu: ${menu.name}`}
-          >
-            Edit menu
-          </Link>
+          />
         )}
       </div>
       {!menu ? (
@@ -114,6 +120,7 @@ export async function MenuItems({ req, widgetData }: WidgetServerProps<MenuItems
                   <Link
                     className="widget-card__row-link"
                     href={item.href}
+                    prefetch={false}
                     title={[item.name, item.details].filter(Boolean).join(' · ')}
                   >
                     <span className="widget-card__row-main">

@@ -190,9 +190,14 @@ is the system queue, separate from hiring.
   Existing saved list columns are not reset.
 - **Beer and menus:** Beers keeps its four tabs and inline Tag/Untappd fill. Price
   labels identify serving size and dollars. Menus use required Menu name as their
-  title, with Menu items first and Display settings separate. Blank item rows
-  still represent empty taps; blank price overrides use catalog prices. Cans
-  retain automatic newest-recipe ordering.
+  title, with Menu items first and Display settings separate. Each item is one
+  line that doesn't collapse (`MenuItemsField`): drag handle, number, picker, a
+  closed **Price & promotion** toggle (**Price** on draft and other menus) whose
+  label lists any value set, and the row's ⋯ menu (move, add, duplicate,
+  remove). The toggle opens by itself when a save rejects its values; on narrow
+  forms (phones, or beside the live preview) it sits under the picker. Rows have
+  no copy/paste. Blank item rows still represent empty taps; blank price
+  overrides use catalog prices. Cans retain automatic newest-recipe ordering.
 - **List search:** The search box on Event Inquiries, Donations
   and Job Applications matches name, email and phone (plus company,
   organization or event name); Dated and Recurring Events match organizer and
@@ -271,7 +276,7 @@ Widgets use Payload's own widget card, `Pill`, `Button`, `Tabs`, `Tooltip`, docu
 - **Inbox** — new inquiries, donation requests and job applications in one list, oldest first, with tabs per kind. A name opens the record in a drawer; **Email** opens your mail app with a summary; **Mark contacted**, **Approve** or **Mark reviewed** changes status only (no email is sent). The widget setting can limit it to one kind; saved **Donation requests** widgets now show the Inbox limited to donation requests.
 - **Menu tracking** — one card per draft/cans menu, worst miss first: items on the menu against its target, a status pill, a sparkline and the share of days on target over the last 90 days. Set the widget's view to **History chart** for the full step chart.
 - **Schedule heatmap** — booking status per EST day, one location per widget: a green cell has food booked, a gray cell is open with no food, a hatched cell is closed (no weekly opening hours that day), and a dot is an event; a pale red cell with a red dot is an event with no food. 6 months at a time with ‹ › arrows to page back about 4 years and ahead about 18 months (recurring rules fill only the year they were set up for). A **Tonight** line lists today's bookings (or says closed / nothing booked and names the next booking), and a pill counts open nights without food in the next 4 weeks. Hover or focus a day for its details and click it to open that day's list. On phone-width cards the grid tightens and, if it still doesn't fit, scrolls sideways with the day labels pinned. Counts follow your read access.
-- **Menu items** — compact, single-line beer/product rows in menu order, with ABV when available and promotions below the item. The heading and explicit **Edit menu** link open the menu editor; each item opens its record. Hover an item for its full name/style/ABV, or the location caption for the full location name. Long lists scroll inside the widget. Open **Dashboard → Edit Dashboard → Add + → Menu items**, then use the widget's edit button to choose a menu and **All menu items**, **Beers only**, or **Products only**. Add an instance for each menu you want to track; settings and widths are independent, including multiple views of the same menu. Save the widget settings, then **Save changes** on the dashboard to keep the layout. Menu and relationship reads follow the signed-in user's access; blank slots and unreadable items are omitted. No widgets are added to existing layouts automatically.
+- **Menu items** — compact, single-line beer/product rows in menu order, with ABV when available and promotions below the item. The heading (menu name · location) and the pencil button open the menu editor; each item opens its record. Hover an item for its full name/style/ABV. Long lists scroll inside the widget. Open **Dashboard → Edit Dashboard → Add + → Menu items**, then use the widget's edit button to choose a menu and **All menu items**, **Beers only**, or **Products only**. Add an instance for each menu you want to track; settings and widths are independent, including multiple views of the same menu. Save the widget settings, then **Save changes** on the dashboard to keep the layout. Menu and relationship reads follow the signed-in user's access; blank slots and unreadable items are omitted. No widgets are added to existing layouts automatically.
 
 ## Globals
 
