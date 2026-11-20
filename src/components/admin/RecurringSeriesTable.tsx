@@ -1,8 +1,9 @@
 'use client'
 
 /**
- * The rows of the "Recurring series" block (RecurringEventsPanel), laid out in
- * the same columns as the Events table below so the two stack as one.
+ * The rows of a recurring block (RecurringSeriesBlock), laid out in the same
+ * columns as the admin list table below it (Events, Food Bookings) so the two
+ * stack as one.
  *
  * Two separate tables size their columns from their own content, so CSS alone
  * cannot line them up. This component reads the dated table's rendered header
@@ -44,7 +45,7 @@ function datedHeaderCells(panelTable: HTMLTableElement): HTMLTableCellElement[] 
   return dated ? [...dated.querySelectorAll<HTMLTableCellElement>('thead th')] : []
 }
 
-export function RecurringEventsTable({ rows, labels, initialColumns }: Props): React.JSX.Element {
+export function RecurringSeriesTable({ rows, labels, initialColumns }: Props): React.JSX.Element {
   const tableRef = useRef<HTMLTableElement>(null)
   const [columns, setColumns] = useState<Column[]>(() =>
     initialColumns.map((accessor) => ({ accessor })),
@@ -137,7 +138,7 @@ export function RecurringEventsTable({ rows, labels, initialColumns }: Props): R
                   <td className="cell--linked" key={accessor}>
                     <Link href={row.href} prefetch={false}>
                       {/* A blank value still needs something to click. */}
-                      {row.cells[accessor] || row.cells.organizer}
+                      {row.cells[accessor] || row.title}
                       {row.paused && (
                         <Pill pillStyle="warning" size="small">
                           Paused

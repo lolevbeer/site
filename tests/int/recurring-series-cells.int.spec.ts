@@ -120,17 +120,14 @@ describe('recurring series rows', () => {
     })
   })
 
-  it('sends only the visible columns, plus the name the link falls back to', () => {
+  it('sends only the visible columns, with the name as the row title', () => {
     const [row] = recurringSeriesRows([{ ...series, description: 'Long staff notes' }], {
       ...options,
       columns: ['_select', 'date'],
     })
 
-    expect(row.cells).toEqual({
-      _select: '',
-      organizer: 'Trivia Night',
-      date: 'First & Third Wednesday · 2027',
-    })
+    expect(row.cells).toEqual({ _select: '', date: 'First & Third Wednesday · 2027' })
+    expect(row.title).toBe('Trivia Night')
   })
 
   it('orders by season then name, with year-less legacy series among the 2026 ones', () => {
@@ -160,7 +157,7 @@ describe('recurring series rows', () => {
   })
 })
 
-// RecurringEventsTable copies the Events table's columns by reading this markup.
+// RecurringSeriesTable copies the Events table's columns by reading this markup.
 // If a Payload upgrade renames it, the two tables silently stop lining up.
 describe('Payload list markup the block depends on', () => {
   const ui = 'node_modules/@payloadcms/ui/dist'

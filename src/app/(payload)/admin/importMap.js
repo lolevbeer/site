@@ -10,6 +10,7 @@ import { DonationReplyButton as DonationReplyButton_939e9c59d658d71aef291a615b0c
 import { EventDateWarning as EventDateWarning_86d7a7ba4986bf7e4d43cf53ef110e20 } from '@/src/components/EventDateWarning'
 import { RecurringEventsPanel as RecurringEventsPanel_e7e4aea551a6872fcc74882726563207 } from '@/src/components/admin/RecurringEventsPanel'
 import { FoodDateWarning as FoodDateWarning_f1a26c4c763b5f7447cc10d2b4b9a2e1 } from '@/src/components/FoodDateWarning'
+import { RecurringFoodPanel as RecurringFoodPanel_032391faa4e6d3f8fcc73d757cb68745 } from '@/src/components/admin/RecurringFoodPanel'
 import { RscEntryLexicalCell as RscEntryLexicalCell_44fe37237e0ebf4470c9990d8cb7b07e } from '@payloadcms/richtext-lexical/rsc'
 import { RscEntryLexicalField as RscEntryLexicalField_44fe37237e0ebf4470c9990d8cb7b07e } from '@payloadcms/richtext-lexical/rsc'
 import { LexicalDiffComponent as LexicalDiffComponent_44fe37237e0ebf4470c9990d8cb7b07e } from '@payloadcms/richtext-lexical/rsc'
@@ -71,6 +72,7 @@ export const importMap = {
   "@/src/components/EventDateWarning#EventDateWarning": EventDateWarning_86d7a7ba4986bf7e4d43cf53ef110e20,
   "@/src/components/admin/RecurringEventsPanel#RecurringEventsPanel": RecurringEventsPanel_e7e4aea551a6872fcc74882726563207,
   "@/src/components/FoodDateWarning#FoodDateWarning": FoodDateWarning_f1a26c4c763b5f7447cc10d2b4b9a2e1,
+  "@/src/components/admin/RecurringFoodPanel#RecurringFoodPanel": RecurringFoodPanel_032391faa4e6d3f8fcc73d757cb68745,
   "@payloadcms/richtext-lexical/rsc#RscEntryLexicalCell": RscEntryLexicalCell_44fe37237e0ebf4470c9990d8cb7b07e,
   "@payloadcms/richtext-lexical/rsc#RscEntryLexicalField": RscEntryLexicalField_44fe37237e0ebf4470c9990d8cb7b07e,
   "@payloadcms/richtext-lexical/rsc#LexicalDiffComponent": LexicalDiffComponent_44fe37237e0ebf4470c9990d8cb7b07e,

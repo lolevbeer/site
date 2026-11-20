@@ -208,6 +208,13 @@ is the system queue, separate from hiring.
   pattern in the Date column ("Repeats") and times in taproom time. Rows and the
   "Create New Recurring" button open the Events Recurring forms. Search, filters
   and sorting apply to the dated rows only; the block shows up to 50 series.
+- **Recurring food on Food Bookings:** For admins, event managers and food
+  managers (the roles that can open the grid), the Food Bookings list shows
+  this year's and later active Food Recurring slots above the dated rows, one
+  row per vendor, taproom and weekday, with the weeks in the Date column
+  ("Repeats", e.g. "First & Third Friday · 2026"). Rows and the "Add Recurring"
+  button open the Food Recurring grid, where the schedule is edited. Search,
+  filters and sorting apply to the dated rows only.
 - **Scheduled publish:** On a beer or menu, the calendar icon beside Save Draft
   schedules a publish (or unpublish) for a set time; check the Type choice
   before saving. A job runner wakes every five minutes, so it goes live within

@@ -21,6 +21,10 @@ export const Food: CollectionConfig = {
     },
     description:
       'Dated vendor bookings. To replace recurring food, also skip that recurring date in Food Recurring.',
+    components: {
+      // Food Recurring grid slots listed above the dated table.
+      beforeListTable: ['@/src/components/admin/RecurringFoodPanel#RecurringFoodPanel'],
+    },
   },
   fields: [
     {
@@ -28,6 +32,8 @@ export const Food: CollectionConfig = {
       type: 'text',
       admin: {
         hidden: true,
+        // Payload 4 still lists `hidden` fields as list columns; Vendor already shows the name.
+        disabled: { column: true },
         description: 'Auto-populated vendor name for display',
       },
       hooks: {
