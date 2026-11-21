@@ -3,7 +3,7 @@
  * `beforeListTable` slot), so one-off and repeating events are managed from one
  * screen. Lists this year's and later series, one row each, linking to the
  * series' own edit form, with a "Create New Recurring" button for people who
- * may create one. Rows use the dated table's columns (RecurringEventsTable
+ * may create one. Rows use the dated table's columns (RecurringSeriesTable
  * keeps them aligned), with the repeat pattern and year in the Date column.
  * The dated table's search, filters and sorting do not apply to these rows.
  *
@@ -19,18 +19,17 @@
 import { unstable_cache } from 'next/cache'
 import Link from 'next/link'
 import type React from 'react'
-import type { BeforeListTableServerProps, FlattenedField, Where } from 'payload'
+import type { BeforeListTableServerProps, Where } from 'payload'
 import { formatAdminURL } from 'payload/shared'
 import { Button } from '@payloadcms/ui'
 import { accessKey, CACHE_TAGS } from '@/lib/utils/cache'
 import { getTodayEST } from '@/lib/utils/date'
-import { RecurringEventsTable } from '@/src/components/admin/RecurringEventsTable'
+import { listColumns, RecurringSeriesBlock } from '@/src/components/admin/RecurringSeriesBlock'
 import {
   recurringSeriesRows,
   type RecurringSeries,
 } from '@/src/components/admin/recurring-series-cells'
 import { LEGACY_SCHEDULE_YEAR, scheduleYearFilter } from '@/src/utils/recurring-food'
-import './RecurringEventsPanel.scss'
 
 type Props = BeforeListTableServerProps
 
@@ -97,13 +96,6 @@ function loadSeries(
   )()
 }
 
-/** A field's list-column heading: our labels are strings, Payload's own (dates) functions. */
-function fieldLabel(field: FlattenedField, i18n: Props['i18n']): string {
-  const { label } = field
-  if (typeof label === 'function') return label({ i18n, t: i18n.t })
-  return typeof label === 'string' ? label : ''
-}
-
 export async function RecurringEventsPanel({
   collectionConfig,
   i18n,
@@ -121,16 +113,7 @@ export async function RecurringEventsPanel({
     path: `/collections/${SLUG}`,
   })
 
-  // Same columns as the dated table, decided the way Payload does: the viewer's
-  // saved choice, else the defaults. `_select` is that table's checkbox column,
-  // kept as an empty spacer here.
-  const saved = listPreferences?.columns?.filter((column) => column.active) ?? []
-  const initialColumns = [
-    '_select',
-    ...(saved.length > 0
-      ? saved.map((column) => column.accessor)
-      : (collectionConfig.admin.defaultColumns ?? [])),
-  ]
+  const { columns, labels } = listColumns({ collectionConfig, i18n, listPreferences })
 
   // This block is an extra: a failed read must not take the Events list down
   // with it, and still leaves the Create button.
@@ -141,7 +124,7 @@ export async function RecurringEventsPanel({
   const rows = recurringSeriesRows(series?.docs ?? [], {
     listURL,
     dateFormat: payload.config.admin.dateFormat,
-    columns: initialColumns,
+    columns,
     onError: (err, id) =>
       payload.logger.error({ err, id }, 'Recurring series left out of the block: bad data'),
   })
@@ -150,49 +133,35 @@ export async function RecurringEventsPanel({
   const canCreate = Boolean(permissions?.collections?.[SLUG]?.create)
   if (rows.length === 0 && !canCreate) return null
 
-  // Header text is the dated list's own, except Date: a series has a pattern instead.
-  const labels: Record<string, string> = {}
-  for (const field of collectionConfig.flattenedFields) {
-    labels[field.name] = fieldLabel(field, i18n)
-  }
-  labels.id ??= 'ID'
-  labels.date = 'Repeats'
-
   return (
-    <section className="recurring-events-panel" aria-labelledby="recurring-events-panel-title">
-      <header className="recurring-events-panel__header">
-        <h2 id="recurring-events-panel-title">Recurring series</h2>
-        {hasMore && (
-          <Link href={listURL} prefetch={false}>
-            First {LIMIT} shown. View all recurring events
-          </Link>
-        )}
-        {canCreate && (
-          <Button
-            buttonStyle="primary"
-            el="link"
-            margin={false}
-            size="medium"
-            to={`${listURL}/create`}
-          >
-            Create New Recurring
-          </Button>
-        )}
-      </header>
-      {rows.length === 0 ? (
-        <p className="recurring-events-panel__empty">
-          {series ? 'No recurring series this year.' : 'Recurring series could not be loaded.'}
-        </p>
-      ) : (
-        // Keyed by the columns: with no dated table to measure, a column change
-        // must still reset the table to the new server-side columns.
-        <RecurringEventsTable
-          initialColumns={initialColumns}
-          key={initialColumns.join(',')}
-          labels={labels}
-          rows={rows}
-        />
-      )}
-    </section>
+    <RecurringSeriesBlock
+      actions={
+        <>
+          {hasMore && (
+            <Link href={listURL} prefetch={false}>
+              First {LIMIT} shown. View all recurring events
+            </Link>
+          )}
+          {canCreate && (
+            <Button
+              buttonStyle="primary"
+              el="link"
+              margin={false}
+              size="medium"
+              to={`${listURL}/create`}
+            >
+              Create New Recurring
+            </Button>
+          )}
+        </>
+      }
+      columns={columns}
+      emptyText={
+        series ? 'No recurring series this year.' : 'Recurring series could not be loaded.'
+      }
+      labels={labels}
+      rows={rows}
+      title="Recurring series"
+    />
   )
 }
