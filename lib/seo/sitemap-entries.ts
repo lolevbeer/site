@@ -8,6 +8,7 @@ import {
   getAllBeersFromPayload,
   getAllLocations,
   getAllUpcomingEventsFromPayload,
+  getHallOfFameReviews,
 } from '@/lib/utils/payload-api'
 import { logger } from '@/lib/utils/logger'
 import { getBaseUrl } from '@/lib/utils/get-base-url'
@@ -84,7 +85,7 @@ const orEmpty = <T>(source: Promise<T[]>, name: string) =>
 
 export async function getSitemapEntries(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = getBaseUrl()
-  const [siteSeo, beers, locations, jobs, events] = await Promise.all([
+  const [siteSeo, beers, locations, jobs, events, hasHallOfFame] = await Promise.all([
     // A failed SEO read lists every page rather than failing the whole sitemap.
     getSiteSeo().catch((error) => {
       logger.error('Error fetching site SEO for sitemap:', error)
@@ -96,6 +97,14 @@ export async function getSitemapEntries(): Promise<MetadataRoute.Sitemap> {
     // Same call as the /events page, so the sitemap lists exactly what it lists:
     // upcoming public one-offs and recurring occurrences, private ones excluded.
     orEmpty(getAllUpcomingEventsFromPayload(100), 'events'),
+    // An empty Hall of Fame is a thin page; list it once a review is ticked.
+    // If the read fails, keep listing it rather than guess.
+    getHallOfFameReviews()
+      .then((reviews) => reviews.length > 0)
+      .catch((error) => {
+        logger.error('Error fetching Hall of Fame reviews for sitemap:', error)
+        return true
+      }),
   ])
 
   const visibleBeers = beers.filter((beer) => beer.slug && !beer.hideFromSite)
@@ -127,6 +136,7 @@ export async function getSitemapEntries(): Promise<MetadataRoute.Sitemap> {
   const staticPages: MetadataRoute.Sitemap = staticEntries
     // Hub SEO groups have no canonical field, so noIndex is the only thing that can hide them.
     .filter((page) => !siteSeo.pages?.[page.key]?.noIndex)
+    .filter((page) => page.path !== '/hall-of-fame' || hasHallOfFame)
     .map(({ path, changeFrequency, priority, lastModified }) => ({
       url: path === '/' ? baseUrl : `${baseUrl}${path}`,
       lastModified,

@@ -8,6 +8,7 @@ vi.mock('@/lib/utils/payload-api', () => ({
   getAllBeersFromPayload: vi.fn(),
   getAllLocations: vi.fn(),
   getAllUpcomingEventsFromPayload: vi.fn(),
+  getHallOfFameReviews: vi.fn(async () => [{ id: 'review-1' }]),
 }))
 
 vi.mock('@/lib/jobs/payload', () => ({
@@ -30,6 +31,7 @@ import {
   getAllBeersFromPayload,
   getAllLocations,
   getAllUpcomingEventsFromPayload,
+  getHallOfFameReviews,
 } from '@/lib/utils/payload-api'
 
 const beers = getAllBeersFromPayload as ReturnType<typeof vi.fn>
@@ -179,6 +181,18 @@ describe('sitemap', () => {
     expect(xml).toContain('<lastmod>2026-10-09T03:00:00.000Z</lastmod>')
     expect(xml).toContain('<changefreq>weekly</changefreq>')
     expect(xml).toContain('<priority>0.7</priority>')
+  })
+
+  it('leaves out the Hall of Fame until a review is on it', async () => {
+    const hallOfFame = getHallOfFameReviews as ReturnType<typeof vi.fn>
+    const listed = async () =>
+      (await sitemap()).some((e) => e.url === 'https://lolev.beer/hall-of-fame')
+
+    expect(await listed()).toBe(true)
+    hallOfFame.mockResolvedValueOnce([])
+    expect(await listed()).toBe(false)
+    hallOfFame.mockRejectedValueOnce(new Error('db down'))
+    expect(await listed()).toBe(true)
   })
 
   it('escapes URLs', async () => {
