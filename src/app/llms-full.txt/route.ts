@@ -21,27 +21,18 @@ export const dynamic = 'force-dynamic'
 export async function GET() {
   const baseUrl = getBaseUrl()
 
-  let beers: Awaited<ReturnType<typeof getAllBeersFromPayload>> = []
-  let cmsFAQs: Awaited<ReturnType<typeof getActiveFAQs>> = []
-  let locations: Awaited<ReturnType<typeof getAllLocations>> = []
-
-  try {
-    beers = await getAllBeersFromPayload()
-  } catch (error) {
-    logger.error('Error fetching beers for llms-full.txt:', error)
-  }
-
-  try {
-    cmsFAQs = await getActiveFAQs()
-  } catch (error) {
-    logger.error('Error fetching FAQs for llms-full.txt:', error)
-  }
-
-  try {
-    locations = await getAllLocations()
-  } catch (error) {
-    logger.error('Error fetching locations for llms-full.txt:', error)
-  }
+  // Independent reads, in parallel: this runs on every CDN miss. A failed one
+  // leaves its section empty rather than failing the file.
+  const orNone = <T>(source: Promise<T[]>, name: string) =>
+    source.catch((error) => {
+      logger.error(`Error fetching ${name} for llms-full.txt:`, error)
+      return [] as T[]
+    })
+  const [beers, cmsFAQs, locations] = await Promise.all([
+    orNone(getAllBeersFromPayload(), 'beers'),
+    orNone(getActiveFAQs(), 'FAQs'),
+    orNone(getAllLocations(), 'locations'),
+  ])
 
   // Filter visible beers and sort by name
   const visibleBeers = beers

@@ -34,13 +34,15 @@ function joinList(items: string[]): string {
   return `${items.slice(0, -1).join(', ')} and ${items[items.length - 1]}`
 }
 
-function formatAbv(abv: number): string {
+/** "8%", "6.5%": one decimal at most, no trailing zero. */
+function abvPercent(abv: number): string {
   return `${Number(abv.toFixed(1))}%`
 }
 
 export function fallbackBeerDescription({ name, abv, style, hops }: BeerDescriptionFacts): string {
-  const styleName = style?.trim() && style.trim() !== 'Beer' ? style.trim() : ''
-  const descriptor = [abv && abv > 0 ? formatAbv(abv) : '', styleName || 'beer']
+  const trimmedStyle = style?.trim() ?? ''
+  const styleName = trimmedStyle !== 'Beer' ? trimmedStyle : ''
+  const descriptor = [abv && abv > 0 ? abvPercent(abv) : '', styleName || 'beer']
     .filter(Boolean)
     .join(' ')
   const hopList = (hops ?? '')

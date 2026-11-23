@@ -208,10 +208,10 @@ export const getBeerBySlug = cache(async (slug: string): Promise<PayloadBeer | n
 })
 
 /**
- * Reviews flagged for the Hall of Fame page.
- * Cached until the 'beers' tag is invalidated (beer-reviews saves fire it).
+ * Reviews flagged for the Hall of Fame page; one read per request, shared by
+ * its metadata and body. Cached until the 'beers' tag is invalidated (beer-reviews saves fire it).
  */
-export const getHallOfFameReviews = async (): Promise<HallOfFameReview[]> => {
+export const getHallOfFameReviews = cache(async (): Promise<HallOfFameReview[]> => {
   try {
     return await unstable_cache(
       async (): Promise<HallOfFameReview[]> => {
@@ -225,7 +225,7 @@ export const getHallOfFameReviews = async (): Promise<HallOfFameReview[]> => {
     logger.error('Error fetching Hall of Fame reviews from Payload', error)
     throw error
   }
-}
+})
 
 /**
  * Get menus for a specific location

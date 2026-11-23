@@ -16,6 +16,6 @@ export const RETIRED_IMAGE_WIDTHS = [750, 1080, 2048, 3840] as const
  */
 export function allowedImageWidthFor(width: number): number | null {
   if (!Number.isInteger(width) || width <= 0) return null
-  if (ALLOWED_WIDTHS.includes(width)) return null
-  return ALLOWED_WIDTHS.find((allowed) => allowed >= width) ?? ALLOWED_WIDTHS.at(-1)!
+  const next = ALLOWED_WIDTHS.find((allowed) => allowed >= width) ?? ALLOWED_WIDTHS.at(-1)!
+  return next === width ? null : next
 }
