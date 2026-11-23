@@ -100,11 +100,8 @@ export async function submitEventInquiry(input: unknown): Promise<SubmitEventInq
         id: created.id,
         channel: eventInquirySlackChannel(),
         message: buildEventInquirySlackMessage({
-          preferredDate: value.preferredDate,
-          headcount: value.headcount,
-          occasion: value.occasion,
-          flexibleDate: value.flexibleDate,
-          otherDates: value.otherDates,
+          ...value,
+          id: created.id,
           taproomName: taproom.name || value.taproom,
         }),
         failLog: 'Event inquiry Slack ping failed',

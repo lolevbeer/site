@@ -24,15 +24,21 @@ import {
 import { formatTime } from '@/lib/utils/formatters'
 import { getBaseUrl } from '@/lib/utils/get-base-url'
 
-export type EventInquiryEmailInput = ValidatedEventInquiry & {
+/** A saved inquiry, as the staff email and the Slack ping both read it. */
+export type EventInquiryNotice = ValidatedEventInquiry & {
   id: string | number
   taproomName: string
+}
+
+/** The inquiry's row in the staff inbox. */
+export function eventInquiryAdminUrl(id: string | number): string {
+  return `${getBaseUrl()}/admin/collections/event-inquiries/${encodeURIComponent(String(id))}`
 }
 
 /** Sends both emails; each is best-effort (see lib/email/send). */
 export async function sendEventInquiryEmails(
   payload: Payload,
-  inquiry: EventInquiryEmailInput,
+  inquiry: EventInquiryNotice,
 ): Promise<void> {
   const date = inquiry.flexibleDate ? `${inquiry.preferredDate} (flexible)` : inquiry.preferredDate
   const occasion = occasionAdminLabel(inquiry.occasion)
@@ -59,7 +65,7 @@ export async function sendEventInquiryEmails(
   ]
   const team = [
     ...fields.map(([label, value]) => `${label}: ${value || '—'}`),
-    `\nInbox: ${getBaseUrl()}/admin/collections/event-inquiries/${inquiry.id}`,
+    `\nInbox: ${eventInquiryAdminUrl(inquiry.id)}`,
     'Reply to this email to answer the visitor.',
   ].join('\n')
   const subject = `Event inquiry: ${[

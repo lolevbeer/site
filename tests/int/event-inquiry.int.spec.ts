@@ -278,44 +278,87 @@ describe('validateEventInquiry', () => {
 })
 
 describe('buildEventInquirySlackMessage', () => {
-  it('names the taproom, date, and headcount but keeps contact details out', () => {
-    const message = buildEventInquirySlackMessage({
-      preferredDate: '2026-11-20',
-      headcount: 30,
-      taproomName: 'Lawrenceville',
-    })
-    const body = JSON.stringify(message)
-    expect(body).toContain('Lawrenceville')
-    expect(body).toContain('2026-11-20')
-    expect(body).toContain('30')
-    expect(body).not.toContain('alex@example.org')
-  })
+  function inquiry(overrides: Record<string, unknown> = {}) {
+    const result = validateEventInquiry({ ...valid(), ...overrides }, TODAY, TAPROOMS)
+    if (!result.ok || result.spam) throw new Error('fixture should validate')
+    return { ...result.value, id: 'inq-1', taproomName: 'Lawrenceville' }
+  }
 
-  it('adds the occasion and a flexible-date note when given', () => {
-    const body = JSON.stringify(
-      buildEventInquirySlackMessage({
-        preferredDate: '2026-11-20',
-        headcount: 30,
-        taproomName: 'Lawrenceville',
-        occasion: 'wedding',
-        flexibleDate: true,
-      }),
-    )
-    expect(body).toContain('Wedding or rehearsal')
-    expect(body).toContain('2026-11-20 (flexible)')
-  })
-
-  it('lists other dates that also work', () => {
-    const body = JSON.stringify(
-      buildEventInquirySlackMessage({
-        preferredDate: '2026-11-20',
-        headcount: 30,
-        taproomName: 'Lawrenceville',
+  it('shows every answer, contact details included', () => {
+    const message = buildEventInquirySlackMessage(
+      inquiry({
+        occasion: 'work',
         flexibleDate: true,
         otherDates: ['2026-11-21', '2026-11-27'],
+        companyName: 'Acme Co',
+        foodPlan: 'caterer',
       }),
     )
-    expect(body).toContain('Also works')
-    expect(body).toContain('2026-11-21, 2026-11-27')
+    const body = JSON.stringify(message)
+    for (const detail of [
+      'Private event inquiry: Alex Rivera',
+      'alex@example.org',
+      '412-555-0100',
+      'Fri, Nov 20, 2026 (flexible)',
+      '6:30pm for 4 hours',
+      'Lawrenceville',
+      '*Guests*\\n30',
+      'Work event',
+      'Host tab',
+      'Caterer',
+      'Acme Co',
+      'Sat, Nov 21, 2026 · Fri, Nov 27, 2026',
+      'Retirement party, would love the back room.',
+      '/admin/collections/event-inquiries/inq-1',
+    ]) {
+      expect(body).toContain(detail)
+    }
+    expect(message.text).toContain('Alex Rivera')
+  })
+
+  it('puts short answers in one grid and the note below it', () => {
+    const { blocks } = buildEventInquirySlackMessage(inquiry({ foodPlan: 'own-food' }))
+    expect(blocks.map((block) => block.type)).toEqual([
+      'header',
+      'section',
+      'section',
+      'section',
+      'context',
+    ])
+    const grid = blocks[2] as { fields: Array<{ text: string }> }
+    expect(grid.fields.length).toBeLessThanOrEqual(10)
+    expect(grid.fields.map((f) => f.text.split('\n')[0])).toEqual([
+      '*Date*',
+      '*Time*',
+      '*Taproom*',
+      '*Guests*',
+      '*Drinks*',
+      '*Food*',
+    ])
+    expect(JSON.stringify(blocks[3])).toContain('*Notes*')
+  })
+
+  it('leaves blank answers out instead of printing empty labels', () => {
+    const body = JSON.stringify(
+      buildEventInquirySlackMessage(inquiry({ phone: '', message: '' })),
+    )
+    for (const label of ['Event type', 'Food', 'Company paying', 'Also works', 'Notes', '(flexible)']) {
+      expect(body).not.toContain(label)
+    }
+    expect(body).not.toContain('412-555-0100')
+  })
+
+  it('keeps the note under the Slack block limit even when escaping grows it', () => {
+    const { blocks } = buildEventInquirySlackMessage(inquiry({ message: '&'.repeat(2000) }))
+    const notes = blocks[3] as { text: { text: string } }
+    expect(Array.from(notes.text.text).length).toBeLessThanOrEqual(3000)
+  })
+
+  it('escapes visitor text so it cannot ping the channel or fake a link', () => {
+    const body = JSON.stringify(
+      buildEventInquirySlackMessage(inquiry({ message: 'Hi <!channel> <https://x.test|click>' })),
+    )
+    expect(body).not.toContain('<!channel>')
+    expect(body).toContain('&lt;!channel&gt;')
   })
 })
