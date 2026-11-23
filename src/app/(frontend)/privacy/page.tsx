@@ -111,8 +111,10 @@ export default function PrivacyPage() {
               Square, not this site.
             </li>
             <li>
-              Slack, to tell staff a donation request or job application arrived. Those pings
-              do not include your email or phone.
+              Slack, to tell staff a donation request, job application, or private-event inquiry
+              arrived. Private-event pings include everything you entered, contact details
+              included, so our events team can quote and reply. Donation and job pings do not
+              include your email or phone.
             </li>
             <li>Our hosting provider, to serve the website.</li>
             <li>Anyone we must tell if the law requires it.</li>
