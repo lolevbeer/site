@@ -7,6 +7,7 @@ import { buildConfig, type CollectionConfig, type WidgetInstance } from 'payload
 import { fileURLToPath } from 'url'
 import { sharpTransformer } from '@payloadcms/transformer-sharp'
 import { revalidationPlugin } from './plugins/revalidation-plugin'
+import { mongoConnectOptions } from './utils/mongo-connect-options'
 import { ssoPlugins } from './plugins/sso'
 
 import { Users } from './collections/Users'
@@ -413,23 +414,12 @@ export default buildConfig({
     // lifetime limit; it does not make a partial migration safe to rerun without
     // following that manifest.
     ...(isMigrationCommand ? { transactionOptions: false as const } : {}),
-    // Serverless connection hardening. Each Vercel lambda opens its own Mongoose
-    // pool; the MongoDB driver default is maxPoolSize 100. A post-deploy ISR
-    // regeneration storm (many cold lambdas booting Payload at once) can then
-    // spike well past MongoDB's connection limit and surface as the transient
-    // fetch errors that used to poison the route cache (see PR #144). Cap the
-    // per-lambda pool small and let idle sockets close so warm-but-quiet
-    // instances don't hold connections open.
-    // ponytail: maxPoolSize 10 is ample for this low-traffic site; raise it only
-    // if a single instance ever needs more concurrent in-flight queries.
-    connectOptions: {
-      maxPoolSize: 10,
-      maxIdleTimeMS: 10000,
-      // Bound connection and server selection while the health probe applies its
-      // own cancellable timeout to the native MongoDB ping operation.
-      connectTimeoutMS: 5000,
-      serverSelectionTimeoutMS: 5000,
-    },
+    // Pool caps, connect bounds and (on Vercel) a socket timeout; reasons in
+    // mongo-connect-options.ts.
+    connectOptions: mongoConnectOptions({
+      onVercel: Boolean(process.env.VERCEL),
+      migration: isMigrationCommand,
+    }),
   }),
   upload: {
     transformers: [sharpTransformer({ collections: { media: mediaSharp } })],
