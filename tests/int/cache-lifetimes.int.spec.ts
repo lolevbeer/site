@@ -22,12 +22,18 @@ vi.mock('@/lib/jobs/payload', () => ({ getJobBySlug: vi.fn() }))
 
 import {
   fetchGlobal,
+  getAllUpcomingEventsFromPayload,
   getAvailableBeersFromMenus,
   getComingSoonBeers,
   getDraftMenu,
   getMenusByLocation,
+  getPublicEventById,
+  getCombinedUpcomingFood,
+  getUpcomingEventsFromPayload,
+  getUpcomingFoodFromPayload,
   getWeeklyHoursWithHolidays,
 } from '@/lib/utils/payload-api'
+
 import { generateStaticParams as jobParams } from '@/src/app/(frontend)/jobs/[slug]/page'
 import nextConfig from '../../next.config.mjs'
 import { textureImageUrl } from '@/lib/utils/media-utils'
@@ -42,11 +48,37 @@ describe('tagged, clock-independent reads', () => {
     ['menus for a location', () => getMenusByLocation('lolev-lawrenceville')],
     ['available beers', () => getAvailableBeersFromMenus()],
     ['coming soon', () => getComingSoonBeers()],
+    // Day-keyed: the Pittsburgh date is in the cache key, so only saves and
+    // midnight change the result.
+    [
+      'events for a location (taproom pages)',
+      () => getUpcomingEventsFromPayload('lolev-lawrenceville', 5),
+    ],
+    ['all upcoming events', () => getAllUpcomingEventsFromPayload()],
+    ['one event', () => getPublicEventById('0123456789abcdef01234567')],
+    ['food for a location', () => getUpcomingFoodFromPayload('lolev-lawrenceville', 5)],
+    ['food with recurring vendors', () => getCombinedUpcomingFood('lolev-lawrenceville', 5)],
   ])('%s keeps an hourly fallback', async (_name, read) => {
     await read().catch(() => null)
     expect(lifetimes.size).toBeGreaterThan(0)
     for (const revalidate of lifetimes.values()) expect(revalidate).toBeGreaterThanOrEqual(3600)
   })
+})
+
+describe('tagged reads with no time-based reason to expire', () => {
+  // Reads the mock above can't reach (nested caches, the jobs module): none
+  // keeps a 5-minute fallback, which made ISR regenerations wait on Mongo.
+  it.each(['lib/utils/payload-api.ts', 'lib/jobs/payload.ts', 'src/app/(frontend)/food/page.tsx'])(
+    '%s has no fallback shorter than an hour',
+    (file) => {
+      const source = readFileSync(join(process.cwd(), file), 'utf8')
+      const lifetimes = [...source.matchAll(/revalidate: (\d[\d_]*)/g)].map((m) =>
+        Number(m[1].replaceAll('_', '')),
+      )
+      expect(lifetimes.length).toBeGreaterThan(0)
+      for (const revalidate of lifetimes) expect(revalidate).toBeGreaterThanOrEqual(3600)
+    },
+  )
 })
 
 describe('on-demand ISR routes', () => {
@@ -91,7 +123,12 @@ describe('image optimization', () => {
   })
 
   it('serves the 3D can textures at a listed width', () => {
-    const width = Number(new URL(textureImageUrl('/a.png')!, 'https://x.test').searchParams.get('w'))
-    expect([...(nextConfig.images?.deviceSizes ?? []), ...(nextConfig.images?.imageSizes ?? [])]).toContain(width)
+    const width = Number(
+      new URL(textureImageUrl('/a.png')!, 'https://x.test').searchParams.get('w'),
+    )
+    expect([
+      ...(nextConfig.images?.deviceSizes ?? []),
+      ...(nextConfig.images?.imageSizes ?? []),
+    ]).toContain(width)
   })
 })

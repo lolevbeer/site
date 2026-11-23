@@ -35,7 +35,7 @@ export interface PublicJob {
   seo?: SeoOverride
 }
 
-const JOBS_CACHE = { tags: [CACHE_TAGS.jobs], revalidate: 300 }
+const JOBS_CACHE = { tags: [CACHE_TAGS.jobs], revalidate: 3600 }
 
 type JobDoc = {
   id: string

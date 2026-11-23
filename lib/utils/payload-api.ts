@@ -939,6 +939,11 @@ export const getWeeklyHoursWithHolidays = cache(
  * Get upcoming events for a location from Payload
  * Returns events with date >= today, sorted by date ascending
  * Cached until 'events' tag is invalidated
+ *
+ * The event and food reads below depend on the clock only by the Pittsburgh
+ * day, which is in each cache key, so like other tagged reads they keep an
+ * hourly fallback. A shorter one made ISR regenerations wait on Mongo: Next
+ * refreshes a stale entry before it saves the page.
  */
 function eventWindow(): { from: string; through: string; years: number[] } {
   const from = getTodayEST()
@@ -1027,7 +1032,7 @@ export const getUpcomingEventsFromPayload = async (
         return findUpcomingPublicEvents(payload, limit, location.id)
       },
       [`events-${locationSlug}-${limit}-${todayKey}`],
-      { tags: [CACHE_TAGS.events, CACHE_TAGS.locations], revalidate: 300 },
+      { tags: [CACHE_TAGS.events, CACHE_TAGS.locations], revalidate: 3600 },
     )()
   } catch (error) {
     logger.error(`Error fetching events for location: ${locationSlug}`, error)
@@ -1048,7 +1053,7 @@ export const getAllUpcomingEventsFromPayload = async (
         return findUpcomingPublicEvents(payload, limit)
       },
       [`events-all-${limit}-${todayKey}`],
-      { tags: [CACHE_TAGS.events, CACHE_TAGS.locations], revalidate: 300 },
+      { tags: [CACHE_TAGS.events, CACHE_TAGS.locations], revalidate: 3600 },
     )()
   } catch (error) {
     logger.error('Error fetching upcoming events', error)
@@ -1140,7 +1145,7 @@ export const getPublicEventById = async (id: string): Promise<PayloadEvent | nul
     return await unstable_cache(
       async () => findPublicEventById(await getPayload({ config }), id),
       [`event-${id}-${todayKey}`],
-      { tags: [CACHE_TAGS.events, CACHE_TAGS.locations], revalidate: 300 },
+      { tags: [CACHE_TAGS.events, CACHE_TAGS.locations], revalidate: 3600 },
     )()
   } catch (error) {
     logger.error(`Error fetching event: ${id}`, error)
@@ -1197,7 +1202,7 @@ export const getUpcomingFoodFromPayload = async (
         return result.docs
       },
       [`food-${locationSlug}-${limit}-${todayKey}`],
-      { tags: [CACHE_TAGS.food, CACHE_TAGS.locations], revalidate: 300 },
+      { tags: [CACHE_TAGS.food, CACHE_TAGS.locations], revalidate: 3600 },
     )()
   } catch (error) {
     logger.error(`Error fetching food for location: ${locationSlug}`, error)
@@ -1228,7 +1233,7 @@ const getRecurringFoodGlobal = async (year: number): Promise<RecurringFoodState>
         return getRecurringFoodState(payload, { overrideAccess: false, year })
       },
       [`recurring-food-global-${year}`],
-      { tags: [CACHE_TAGS.food], revalidate: 300 },
+      { tags: [CACHE_TAGS.food], revalidate: 3600 },
     )()
   } catch (error) {
     logger.error('Error fetching recurring food schedules', error)
@@ -1370,7 +1375,7 @@ const getUpcomingRecurringFood = async (
         return entries.slice(0, limit)
       },
       [`recurring-food-${locationSlug}-${limit}-${monthsAhead}-${todayKey}`],
-      { tags: [CACHE_TAGS.food, CACHE_TAGS.locations], revalidate: 300 },
+      { tags: [CACHE_TAGS.food, CACHE_TAGS.locations], revalidate: 3600 },
     )()
   } catch (error) {
     logger.error(`Error fetching recurring food for location: ${locationSlug}`, error)
