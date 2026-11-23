@@ -21,10 +21,9 @@ import {
   EVENT_INQUIRY_FOOD_PLANS,
   occasionAdminLabel,
   optionLabel,
-  type ValidatedEventInquiry,
 } from '@/lib/events/inquiry'
+import { eventInquiryAdminUrl, type EventInquiryNotice } from '@/lib/events/inquiry-email'
 import { formatTime } from '@/lib/utils/formatters'
-import { getBaseUrl } from '@/lib/utils/get-base-url'
 
 /**
  * Channel for inquiry pings (`SLACK_EVENT_INQUIRY_CHANNEL`, else the donation
@@ -38,33 +37,11 @@ export function eventInquirySlackChannel(): string {
   )
 }
 
-export type EventInquirySlackInput = Pick<
-  ValidatedEventInquiry,
-  | 'name'
-  | 'email'
-  | 'phone'
-  | 'preferredDate'
-  | 'flexibleDate'
-  | 'otherDates'
-  | 'startTime'
-  | 'duration'
-  | 'drinks'
-  | 'companyName'
-  | 'foodPlan'
-  | 'headcount'
-  | 'occasion'
-  | 'message'
-> & {
-  /** The inbox row, for the "Open in Admin" link. */
-  id: string | number
-  taproomName: string
-}
-
 /** Section text is capped at 3000 characters; leave room for the label. */
 const NOTES_MAX = 2900
 
 /** "Fri, Nov 20, 2026" for a YYYY-MM-DD day; the raw string if it does not parse. */
-export function formatInquiryDate(ymd: string): string {
+function formatSlackDay(ymd: string): string {
   const [year, month, day] = ymd.split('-').map(Number)
   const date = new Date(Date.UTC(year, month - 1, day))
   if (!year || !month || !day || Number.isNaN(date.getTime())) return ymd
@@ -78,12 +55,12 @@ export function formatInquiryDate(ymd: string): string {
 }
 
 /** chat.postMessage body (minus channel) for a new private-event inquiry. */
-export function buildEventInquirySlackMessage(input: EventInquirySlackInput): {
+export function buildEventInquirySlackMessage(input: EventInquiryNotice): {
   text: string
   blocks: Array<Record<string, unknown>>
 } {
   const { name, message } = input
-  const day = formatInquiryDate(input.preferredDate)
+  const day = formatSlackDay(input.preferredDate)
   const date = input.flexibleDate ? `${day} (flexible)` : day
   const occasion = input.occasion ? occasionAdminLabel(input.occasion) : undefined
   const start = input.startTime ? formatTime(input.startTime) : ''
@@ -101,7 +78,7 @@ export function buildEventInquirySlackMessage(input: EventInquirySlackInput): {
     ['Drinks', optionLabel(EVENT_INQUIRY_DRINKS, input.drinks)],
     ['Food', optionLabel(EVENT_INQUIRY_FOOD_PLANS, input.foodPlan)],
     ['Company paying', input.companyName],
-    ['Also works', input.otherDates.map(formatInquiryDate).join(' · ')],
+    ['Also works', input.otherDates.map(formatSlackDay).join(' · ')],
   ]
   // Section fields cap at 10; the list above is 9.
   const fields = answers
@@ -110,7 +87,7 @@ export function buildEventInquirySlackMessage(input: EventInquirySlackInput): {
 
   // The validator has already trimmed every answer.
   const contact = [input.email, input.phone].filter(Boolean).map(escapeMrkdwn).join('   ·   ')
-  const adminUrl = `${getBaseUrl()}/admin/collections/event-inquiries/${encodeURIComponent(String(input.id))}`
+  const adminUrl = eventInquiryAdminUrl(input.id)
 
   const summary = [name, occasion, input.taproomName, date, `${input.headcount} guests`]
     .filter(Boolean)
