@@ -15,6 +15,7 @@ import { generateProductSchema } from '@/lib/utils/product-schema'
 import { generateBreadcrumbSchema, generateWebPageSchema } from '@/lib/utils/breadcrumb-schema'
 import { buildPageMetadata } from '@/lib/seo/resolve-metadata'
 import { ogCardImages } from '@/lib/og/paths'
+import { fallbackBeerDescription } from '@/lib/seo/beer-description'
 
 interface BeerPageProps {
   params: Promise<{
@@ -37,7 +38,7 @@ export async function generateMetadata({ params }: BeerPageProps): Promise<Metad
   const styleName = typeof beer.style === 'string' ? beer.style : beer.style?.name || ''
   const description =
     (typeof beer.description === 'string' ? beer.description.trim() : '') ||
-    `${beer.name}${styleName ? ` — ${styleName}` : ''} beer from Lolev Beer, a craft brewery in Pittsburgh.`
+    fallbackBeerDescription({ name: beer.name, abv: beer.abv, style: styleName, hops: beer.hops })
 
   const pageTitle = styleName ? `${beer.name} • ${styleName}` : beer.name
   const seo = beer.seo

@@ -11,6 +11,7 @@ import { getBeerImageUrl } from '@/lib/utils/media-utils'
 import { LOLEV_BASE_URL, LOLEV_OG_IMAGE_URL } from '@/lib/utils/schema-shared'
 import { relationshipName } from '@/lib/utils/relationship-name'
 import { getShownDraftPrice } from '@/lib/utils/packaging-utils'
+import { fallbackBeerDescription } from '@/lib/seo/beer-description'
 
 /**
  * Schema.org Product type
@@ -221,7 +222,9 @@ export function generateProductSchema(
     '@context': 'https://schema.org',
     '@type': 'Product',
     name: beer.name,
-    description: beer.description || `${beer.name} - ${styleName} beer from Lolev Beer`,
+    description:
+      beer.description?.trim() ||
+      fallbackBeerDescription({ name: beer.name, abv: beer.abv, style: styleName, hops: beer.hops }),
     brand: {
       '@type': 'Brand',
       name: 'Lolev Beer',
