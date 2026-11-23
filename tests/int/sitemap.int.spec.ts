@@ -23,7 +23,7 @@ vi.mock('@/lib/utils/logger', () => ({
 }))
 
 import { getSitemapEntries as sitemap } from '@/lib/seo/sitemap-entries'
-import { GET, revalidate } from '@/src/app/sitemap.xml/route'
+import { GET, dynamic } from '@/src/app/sitemap.xml/route'
 import { getSiteSeo } from '@/lib/utils/site-seo'
 import { getActiveJobs } from '@/lib/jobs/payload'
 import {
@@ -152,8 +152,17 @@ describe('sitemap', () => {
     expect((catalog?.lastModified as Date).toISOString()).toBe('2026-10-09T03:00:00.000Z')
   })
 
-  it('regenerates hourly instead of staying frozen at build time', () => {
-    expect(revalidate).toBe(3600)
+  // As an ISR route (revalidate = 3600) it still froze at deploy time on Vercel,
+  // so it renders on request and the CDN keeps each copy for an hour.
+  it('renders on request instead of staying frozen at build time', () => {
+    expect(dynamic).toBe('force-dynamic')
+  })
+
+  it('still lists every page when the SEO settings cannot be read', async () => {
+    ;(getSiteSeo as ReturnType<typeof vi.fn>).mockRejectedValue(new Error('db down'))
+    const entries = await sitemap()
+    expect(entries.some((e) => e.url === 'https://lolev.beer/beer/lupula')).toBe(true)
+    expect(entries.some((e) => e.url === 'https://lolev.beer/about')).toBe(true)
   })
 
   // A sitemap.ts metadata route was served like a static file on Vercel, so it
@@ -164,6 +173,7 @@ describe('sitemap', () => {
 
     expect(response.headers.get('Content-Type')).toBe('application/xml; charset=utf-8')
     expect(response.headers.get('Cache-Control')).toContain('s-maxage=3600')
+    expect(response.headers.get('Cache-Control')).toContain('stale-while-revalidate')
     expect(xml.startsWith('<?xml version="1.0" encoding="UTF-8"?>')).toBe(true)
     expect(xml).toContain('<loc>https://lolev.beer/beer/lupula</loc>')
     expect(xml).toContain('<lastmod>2026-10-09T03:00:00.000Z</lastmod>')

@@ -85,7 +85,11 @@ const orEmpty = <T>(source: Promise<T[]>, name: string) =>
 export async function getSitemapEntries(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = getBaseUrl()
   const [siteSeo, beers, locations, jobs, events] = await Promise.all([
-    getSiteSeo(),
+    // A failed SEO read lists every page rather than failing the whole sitemap.
+    getSiteSeo().catch((error) => {
+      logger.error('Error fetching site SEO for sitemap:', error)
+      return {} as Awaited<ReturnType<typeof getSiteSeo>>
+    }),
     orEmpty(getAllBeersFromPayload(), 'beers'),
     orEmpty(getAllLocations(), 'locations'),
     orEmpty(getActiveJobs(), 'jobs'),
