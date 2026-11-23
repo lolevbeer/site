@@ -348,6 +348,12 @@ describe('buildEventInquirySlackMessage', () => {
     expect(body).not.toContain('412-555-0100')
   })
 
+  it('keeps the note under the Slack block limit even when escaping grows it', () => {
+    const { blocks } = buildEventInquirySlackMessage(inquiry({ message: '&'.repeat(2000) }))
+    const notes = blocks[3] as { text: { text: string } }
+    expect(Array.from(notes.text.text).length).toBeLessThanOrEqual(3000)
+  })
+
   it('escapes visitor text so it cannot ping the channel or fake a link', () => {
     const body = JSON.stringify(
       buildEventInquirySlackMessage(inquiry({ message: 'Hi <!channel> <https://x.test|click>' })),

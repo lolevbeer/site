@@ -82,8 +82,9 @@ export function buildEventInquirySlackMessage(input: EventInquirySlackInput): {
   text: string
   blocks: Array<Record<string, unknown>>
 } {
-  const name = input.name.trim()
-  const date = formatInquiryDate(input.preferredDate)
+  const { name, message } = input
+  const day = formatInquiryDate(input.preferredDate)
+  const date = input.flexibleDate ? `${day} (flexible)` : day
   const occasion = input.occasion ? occasionAdminLabel(input.occasion) : undefined
   const start = input.startTime ? formatTime(input.startTime) : ''
   const length = optionLabel(EVENT_INQUIRY_DURATIONS, input.duration)
@@ -92,37 +93,26 @@ export function buildEventInquirySlackMessage(input: EventInquirySlackInput): {
   // Short answers fill a two-column grid, paired so related answers sit side
   // by side; a blank answer drops out and the rest close up.
   const answers: Array<[string, string | undefined]> = [
-    ['Date', input.flexibleDate ? `${date} (flexible)` : date],
+    ['Date', date],
     ['Time', time],
     ['Taproom', input.taproomName],
     ['Guests', String(input.headcount)],
     ['Event type', occasion],
     ['Drinks', optionLabel(EVENT_INQUIRY_DRINKS, input.drinks)],
     ['Food', optionLabel(EVENT_INQUIRY_FOOD_PLANS, input.foodPlan)],
-    ['Company paying', input.companyName.trim()],
+    ['Company paying', input.companyName],
     ['Also works', input.otherDates.map(formatInquiryDate).join(' · ')],
   ]
   // Section fields cap at 10; the list above is 9.
   const fields = answers
-    .filter((entry): entry is [string, string] => Boolean(entry[1]?.trim()))
+    .filter((entry): entry is [string, string] => Boolean(entry[1]))
     .map(([label, value]) => field(label, value))
 
-  const contact = [input.email, input.phone]
-    .map((value) => value.trim())
-    .filter(Boolean)
-    .map(escapeMrkdwn)
-    .join('   ·   ')
-
-  const message = input.message.trim()
+  // The validator has already trimmed every answer.
+  const contact = [input.email, input.phone].filter(Boolean).map(escapeMrkdwn).join('   ·   ')
   const adminUrl = `${getBaseUrl()}/admin/collections/event-inquiries/${encodeURIComponent(String(input.id))}`
 
-  const summary = [
-    name,
-    occasion,
-    input.taproomName,
-    input.flexibleDate ? `${date} (flexible)` : date,
-    `${input.headcount} guests`,
-  ]
+  const summary = [name, occasion, input.taproomName, date, `${input.headcount} guests`]
     .filter(Boolean)
     .join(' · ')
 
@@ -142,7 +132,9 @@ export function buildEventInquirySlackMessage(input: EventInquirySlackInput): {
         ? [
             {
               type: 'section',
-              text: { type: 'mrkdwn', text: `*Notes*\n${escapeMrkdwn(clip(message, NOTES_MAX))}` },
+              // Clip after escaping: `&` becomes `&amp;`, so clipping first
+              // could still push the block past Slack's limit.
+              text: { type: 'mrkdwn', text: `*Notes*\n${clip(escapeMrkdwn(message), NOTES_MAX)}` },
             },
           ]
         : []),
