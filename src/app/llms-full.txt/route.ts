@@ -13,7 +13,7 @@ import { logger } from '@/lib/utils/logger'
 import { ORG_DESCRIPTION } from '@/lib/utils/seo'
 import { formatPhoneLines } from '@/lib/utils/llms-now'
 import { loadPouringNow } from '@/lib/utils/llms-now-data'
-import { CRAWLER_ROUTE_CACHE_CONTROL } from '@/lib/seo/crawler-route'
+import { crawlerCacheControl } from '@/lib/seo/crawler-route'
 
 // Renders on request behind the CDN; as an ISR route it froze at deploy time.
 export const dynamic = 'force-dynamic'
@@ -22,10 +22,13 @@ export async function GET() {
   const baseUrl = getBaseUrl()
 
   // Independent reads, in parallel: this runs on every CDN miss. A failed one
-  // leaves its section empty rather than failing the file.
+  // leaves its section empty rather than failing the file, and that copy is
+  // not cached.
+  let complete = true
   const orNone = <T>(source: Promise<T[]>, name: string) =>
     source.catch((error) => {
       logger.error(`Error fetching ${name} for llms-full.txt:`, error)
+      complete = false
       return [] as T[]
     })
   const [beers, cmsFAQs, locations] = await Promise.all([
@@ -132,7 +135,7 @@ Our taprooms offer a curated selection of our freshest draft beers and canned of
   return new NextResponse(content, {
     headers: {
       'Content-Type': 'text/plain; charset=utf-8',
-      'Cache-Control': CRAWLER_ROUTE_CACHE_CONTROL,
+      'Cache-Control': crawlerCacheControl(complete),
     },
   })
 }

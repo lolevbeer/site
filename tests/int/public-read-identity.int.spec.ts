@@ -96,6 +96,8 @@ describe('public reads pass overrideAccess: false', () => {
 
   it('/e/[location] looks locations up through the cached anonymous list', async () => {
     const { getAllLocations } = await import('@/lib/utils/payload-api')
+    // The /food test above calls it too; count only this page's call.
+    vi.mocked(getAllLocations).mockClear()
     await eventsDisplayMetadata({ params: Promise.resolve({ location: 'lawrenceville' }) })
     expect(getAllLocations).toHaveBeenCalled()
     expect(find.mock.calls.some(([args]) => args.collection === 'locations')).toBe(false)

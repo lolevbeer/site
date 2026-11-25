@@ -1,3 +1,4 @@
+/** Maps image widths the optimizer no longer accepts onto ones it does; used by src/proxy.ts. */
 import { IMAGE_DEVICE_SIZES, IMAGE_SIZES } from '@/lib/config/image-sizes.mjs'
 
 const ALLOWED_WIDTHS = [...IMAGE_SIZES, ...IMAGE_DEVICE_SIZES].sort((a, b) => a - b)

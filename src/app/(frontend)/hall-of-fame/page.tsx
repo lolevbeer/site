@@ -22,22 +22,18 @@ const HALL_OF_FAME_DESCRIPTION = 'Our favorite things people have said about Lol
 
 export async function generateMetadata(): Promise<Metadata> {
   const [metadata, reviews] = await Promise.all([
-    buildMetadata(),
+    buildPageMetadata({
+      fallbackTitle: 'Hall of Fame',
+      fallbackDescription: HALL_OF_FAME_DESCRIPTION,
+      canonicalPath: '/hall-of-fame',
+      fallbackKeywords: ['Lolev Beer reviews', 'Untappd reviews', 'Pittsburgh brewery'],
+      hubKey: 'hallOfFame',
+    }),
     getHallOfFameReviews().catch(() => null),
   ])
   // Until a review is ticked the page is a heading and "No reviews here yet":
   // keep it out of search (the sitemap leaves it out too) but let links be followed.
   return reviews?.length === 0 ? { ...metadata, robots: NOINDEX_FOLLOW_ROBOTS } : metadata
-}
-
-function buildMetadata(): Promise<Metadata> {
-  return buildPageMetadata({
-    fallbackTitle: 'Hall of Fame',
-    fallbackDescription: HALL_OF_FAME_DESCRIPTION,
-    canonicalPath: '/hall-of-fame',
-    fallbackKeywords: ['Lolev Beer reviews', 'Untappd reviews', 'Pittsburgh brewery'],
-    hubKey: 'hallOfFame',
-  })
 }
 
 export default async function HallOfFamePage() {

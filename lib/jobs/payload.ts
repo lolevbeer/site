@@ -35,7 +35,8 @@ export interface PublicJob {
   seo?: SeoOverride
 }
 
-const JOBS_CACHE = { tags: [CACHE_TAGS.jobs], revalidate: 3600 }
+// Jobs embed their location's name and address, so a location save refreshes them too.
+const JOBS_CACHE = { tags: [CACHE_TAGS.jobs, CACHE_TAGS.locations], revalidate: 3600 }
 
 type JobDoc = {
   id: string

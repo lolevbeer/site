@@ -9,7 +9,7 @@ import { NextResponse } from 'next/server'
 import type { MetadataRoute } from 'next'
 import { getSitemapEntries } from '@/lib/seo/sitemap-entries'
 import { escapeXml } from '@/lib/utils/escape-xml'
-import { CRAWLER_ROUTE_CACHE_CONTROL } from '@/lib/seo/crawler-route'
+import { crawlerCacheControl } from '@/lib/seo/crawler-route'
 
 export const dynamic = 'force-dynamic'
 
@@ -27,7 +27,7 @@ function urlElement({
 }
 
 export async function GET() {
-  const entries = await getSitemapEntries()
+  const { entries, complete } = await getSitemapEntries()
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${entries.map(urlElement).join('\n')}
@@ -36,7 +36,7 @@ ${entries.map(urlElement).join('\n')}
   return new NextResponse(xml, {
     headers: {
       'Content-Type': 'application/xml; charset=utf-8',
-      'Cache-Control': CRAWLER_ROUTE_CACHE_CONTROL,
+      'Cache-Control': crawlerCacheControl(complete),
     },
   })
 }

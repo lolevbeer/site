@@ -76,18 +76,25 @@ type StaticPage = {
   priority: number
 }
 
-/** Log a failed source and continue with `fallback`, so one outage cannot empty the whole sitemap. */
-const orElse = <T>(source: Promise<T>, name: string, fallback: T) =>
-  source.catch((error) => {
-    logger.error(`Error fetching ${name} for sitemap:`, error)
-    return fallback
-  })
+export interface SitemapResult {
+  entries: MetadataRoute.Sitemap
+  /** False when a read failed and its pages are missing; the route then skips the CDN cache. */
+  complete: boolean
+}
 
-export async function getSitemapEntries(): Promise<MetadataRoute.Sitemap> {
+export async function getSitemapEntries(): Promise<SitemapResult> {
   const baseUrl = getBaseUrl()
+  let complete = true
+  /** Log a failed source and continue with `fallback`, so one outage cannot empty the whole sitemap. */
+  const orElse = <T>(source: Promise<T>, name: string, fallback: T) =>
+    source.catch((error) => {
+      logger.error(`Error fetching ${name} for sitemap:`, error)
+      complete = false
+      return fallback
+    })
   const [siteSeo, beers, locations, jobs, events, hasHallOfFame] = await Promise.all([
-    // A failed SEO read lists every page rather than failing the whole sitemap.
-    orElse(getSiteSeo(), 'site SEO', {}),
+    // Never rejects: a failed SEO read resolves {}, which lists every page.
+    getSiteSeo(),
     orElse(getAllBeersFromPayload(), 'beers', []),
     orElse(getAllLocations(), 'locations', []),
     orElse(getActiveJobs(), 'jobs', []),
@@ -179,5 +186,8 @@ export async function getSitemapEntries(): Promise<MetadataRoute.Sitemap> {
         priority: 0.6,
       }))
 
-  return [...staticPages, ...beerPages, ...locationPages, ...jobPages, ...eventPages]
+  return {
+    entries: [...staticPages, ...beerPages, ...locationPages, ...jobPages, ...eventPages],
+    complete,
+  }
 }

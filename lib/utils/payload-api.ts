@@ -564,6 +564,9 @@ export const getAllLocations = cache(async () => {
             },
           },
           sort: 'name',
+          // Every active location: the default page size is 10, and callers
+          // (the TV boards, the sitemap) look locations up in this list.
+          pagination: false,
         })
 
         return result.docs
