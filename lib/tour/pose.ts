@@ -32,10 +32,15 @@ const mix = (a: Point, b: Point, k: number): Point => [
   a[2] * (1 - k) + b[2] * k,
 ]
 
-/** The can between stops `a` and `b`: shown only where it does not have to move. */
+/** How near a stop its can shows, as a share of the way to the next stop.
+ *  Scrolling never rests exactly on a stop, so this cannot be zero. */
+const CAN_NEAR = 0.2
+
+/** The can between stops `a` and `b`: at either stop's own place while near
+ *  that stop, and in between only if it does not have to move. */
 function canBetween(a: TourStop, b: TourStop, share: number): Point | null {
-  if (share === 0) return a.can
-  if (share === 1) return b.can
+  if (share <= CAN_NEAR) return a.can
+  if (share >= 1 - CAN_NEAR) return b.can
   const same = a.can && b.can && a.can.every((v, i) => v === b.can![i])
   return same ? a.can : null
 }

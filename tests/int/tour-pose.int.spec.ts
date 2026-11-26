@@ -74,8 +74,10 @@ describe('poseAt', () => {
     expect(poseAt(between('bar', 'seating')).can).toBeNull()
     expect(poseAt(between('seating', 'brewery')).can).toBeNull()
     expect(poseAt(between('brewery', 'visit')).can).toBeNull()
-    // Just off a stop counts as moving too.
-    expect(poseAt(progressForStop('brewery') - 0.01).can).toBeNull()
+    // Scrolling never lands exactly on a stop: the can is there a little either side of it.
+    expect(poseAt(progressForStop('brewery') - 0.02).can).toEqual(stop('brewery').can)
+    expect(poseAt(progressForStop('brewery') + 0.02).can).toEqual(stop('brewery').can)
+    expect(poseAt(progressForStop('brewery') - 0.1).can).toBeNull()
   })
 
   it('keeps the can on the bar between the can and bar stops', () => {
