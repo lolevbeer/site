@@ -23,6 +23,8 @@ vi.mock('three', () => {
     WebGLRenderer: class {
       setSize = vi.fn()
       setPixelRatio = vi.fn()
+      // Read before the load starts, to hand the can its texture quality.
+      capabilities = { getMaxAnisotropy: () => 1 }
       dispose = gpu.renderer.dispose
       forceContextLoss = gpu.renderer.forceContextLoss
     },
