@@ -12,8 +12,16 @@ export type TourStopId = 'can' | 'bar' | 'seating' | 'brewery' | 'visit'
 
 export interface TourStop {
   id: TourStopId
+  /** Short name, for the rail of dots beside the tour. */
   label: string
+  /** The stop's heading, a line under it, and the words on its link to `href`.
+   *  The first stop shows the homepage hero instead and uses only `label`. */
+  heading: string
+  text: string
+  cta: string
   href: string
+  /** A second link, where a stop covers two pages. */
+  also?: { cta: string; href: string }
   /** Camera position and target, in HQ's feet. */
   camera: { p: [number, number, number]; t: [number, number, number] }
   /** HQ group switches: ceiling and upper floor. */
@@ -38,6 +46,9 @@ export const TOUR_STOPS: TourStop[] = [
   {
     id: 'can',
     label: 'The can',
+    heading: 'Lolev Beer',
+    text: '',
+    cta: 'See this beer',
     // Task C3 swaps in the featured beer's page.
     href: '/beer',
     // Not an HQ view: the guest side of the bar, about 2 ft from the can and at
@@ -50,6 +61,9 @@ export const TOUR_STOPS: TourStop[] = [
   {
     id: 'bar',
     label: 'The bar',
+    heading: 'On draft now',
+    text: 'See what is pouring at the bar today.',
+    cta: 'Beer',
     href: '/beer',
     // views.js: 'Bar'
     camera: { p: [29.5, 5.4, 83.2], t: [57, 6.2, 71.5] },
@@ -60,6 +74,10 @@ export const TOUR_STOPS: TourStop[] = [
   {
     id: 'seating',
     label: 'Seating',
+    heading: 'Events and food',
+    text: 'Pull up a seat. See what is on this week and who is cooking.',
+    cta: 'Events',
+    also: { cta: 'Food', href: '/food' },
     href: '/events',
     // views.js: 'Seating'
     camera: { p: [89, 5.4, 92], t: [61, 5, 72] },
@@ -70,6 +88,9 @@ export const TOUR_STOPS: TourStop[] = [
   {
     id: 'brewery',
     label: 'The brewery',
+    heading: 'Brewed right here',
+    text: 'Every can starts in these tanks.',
+    cta: 'Our cans',
     href: '/beer',
     // Not HQ's 'Brewery' view, which a brick column half hides and from which a
     // can on the floor is a speck: down near the floor, 2 ft behind the can,
@@ -82,6 +103,9 @@ export const TOUR_STOPS: TourStop[] = [
   {
     id: 'visit',
     label: 'Visit',
+    heading: 'Come visit',
+    text: 'Two taprooms. Hours and directions for both.',
+    cta: 'Plan a visit',
     // Taproom pages are `/<slug>` with slugs set in the CMS, so there is no
     // fixed taproom URL; /about is the fixed page that covers both taprooms.
     href: '/about',

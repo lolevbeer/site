@@ -4,7 +4,7 @@
  */
 import { describe, it, expect } from 'vitest'
 import { TOUR_STOPS } from '@/lib/tour/stops'
-import { poseAt, progressForStop, stopAt } from '@/lib/tour/pose'
+import { progressFromTops, poseAt, progressForStop, stopAt } from '@/lib/tour/pose'
 
 const stop = (id: string) => TOUR_STOPS.find((s) => s.id === id)!
 /** Progress halfway between two stops. */
@@ -113,5 +113,20 @@ describe('stopAt and progressForStop', () => {
     expect(stopAt(0.45)).toBe('seating')
     expect(stopAt(-1)).toBe('can')
     expect(stopAt(2)).toBe('visit')
+  })
+})
+
+describe('progressFromTops', () => {
+  it('is 0 before the tour, at each stop when its top meets the window top, and 1 after', () => {
+    expect(progressFromTops([100, 800, 1500, 2200, 2900])).toBe(0)
+    expect(progressFromTops([0, 700, 1400, 2100, 2800])).toBe(0)
+    expect(progressFromTops([-700, 0, 700, 1400, 2100])).toBe(0.25)
+    expect(progressFromTops([-2800, -2100, -1400, -700, 0])).toBe(1)
+    expect(progressFromTops([-3800, -3100, -2400, -1700, -1000])).toBe(1)
+  })
+
+  it('follows stops of different heights', () => {
+    // The first stop is 1000 tall and half scrolled past; the rest are 700.
+    expect(progressFromTops([-500, 500, 1200, 1900, 2600])).toBe(0.125)
   })
 })

@@ -73,3 +73,18 @@ export function stopAt(progress: number): TourStopId {
 export function progressForStop(id: TourStopId): number {
   return TOUR_STOPS.findIndex((stop) => stop.id === id) / LAST
 }
+
+/**
+ * The tour's progress from where its stops are on screen. `tops` is each
+ * stop's top edge in order, measured from the top of the window (negative once
+ * scrolled past). A stop is reached when its top meets the top of the window,
+ * so stops of different heights still land on their own cameras.
+ */
+export function progressFromTops(tops: number[]): number {
+  // The last stop whose top has reached the window's top (the first, before any has).
+  let from = 0
+  while (from < LAST && tops[from + 1] <= 0) from++
+  if (from >= LAST) return 1
+  const share = -tops[from] / (tops[from + 1] - tops[from])
+  return (from + Math.min(Math.max(share, 0), 1)) / LAST
+}
