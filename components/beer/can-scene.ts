@@ -124,6 +124,10 @@ export interface CanObjectOptions {
   metalness?: TextureSource
   /** The caller's renderer.capabilities.getMaxAnisotropy(), for sharp label art at an angle. */
   maxAnisotropy: number
+  /** Raise the foil slightly off the paper (default true). It costs one of the
+   *  16 textures a shader may read, and the tour's scene, with the brewery's
+   *  lights and shadows, has none to spare: with it the label does not draw. */
+  bump?: boolean
 }
 
 export interface CanObject {
@@ -146,6 +150,7 @@ export async function createCanObject({
   base,
   metalness,
   maxAnisotropy,
+  bump = true,
 }: CanObjectOptions): Promise<CanObject> {
   const texLoader = new THREE.TextureLoader()
   const loadTexture = (src: TextureSource) =>
@@ -231,8 +236,10 @@ export async function createCanObject({
   if (metalTex) {
     metalTex.anisotropy = maxAnisotropy
     labelMat.metalnessMap = metalTex
-    labelMat.bumpMap = metalTex // foil sits slightly proud of the paper
-    labelMat.bumpScale = 0.02
+    if (bump) {
+      labelMat.bumpMap = metalTex // foil sits slightly proud of the paper
+      labelMat.bumpScale = 0.02
+    }
     // Roughness from the mask: white (foil) → FOIL_ROUGHNESS, black →
     // MATTE_ROUGHNESS. Downscaled first — roughness is low-frequency, and
     // remapping the full 4MP mask would stall the main thread on mount.

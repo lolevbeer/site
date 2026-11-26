@@ -29,11 +29,10 @@ export interface TourStop {
 // This is the middle of its length, 9" in from the guest edge.
 const CAN_ON_BAR: [number, number, number] = [41, 3.5, 71.6]
 
-// The can's base on the brewery floor (y 0), about 2 ft south of the two 10BBL
+// The can's base on the brewery floor (y 0), about 2.4 ft south of the two 10BBL
 // tanks at the east end of the second fermenter row. equipment/layout.js: those
 // tanks span x 48.8 to 56.9 and their south faces are at z 33.2 (ROW2_Z10 + R10).
-// The spot is on the Brewery view's line of sight.
-const CAN_BY_FERMENTERS: [number, number, number] = [51, 0, 35.2]
+const CAN_BY_FERMENTERS: [number, number, number] = [51, 0, 35.6]
 
 export const TOUR_STOPS: TourStop[] = [
   {
@@ -72,8 +71,10 @@ export const TOUR_STOPS: TourStop[] = [
     id: 'brewery',
     label: 'The brewery',
     href: '/beer',
-    // views.js: 'Brewery'
-    camera: { p: [62, 7, 44], t: [24, 5, 16] },
+    // Not HQ's 'Brewery' view, which a brick column half hides and from which a
+    // can on the floor is a speck: down near the floor, 2 ft behind the can,
+    // looking up at the tanks (chosen from captures, 2026-11-26).
+    camera: { p: [51.9, 0.5, 37.6], t: [51, 1.5, 33] },
     ceil: true,
     up: true,
     can: CAN_BY_FERMENTERS,
