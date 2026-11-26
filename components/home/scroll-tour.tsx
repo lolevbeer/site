@@ -200,24 +200,27 @@ export function ScrollTour({ can, children }: ScrollTourProps) {
         <div className="pointer-events-none absolute inset-0 z-20">
           <nav
             aria-label="Brewery tour"
-            className="sticky top-0 flex h-screen flex-col items-end justify-center gap-3 pr-3 md:pr-5"
+            className="sticky top-0 flex h-screen flex-col items-end justify-center pr-2 md:pr-4"
           >
-            {TOUR_STOPS.map((stop) => (
-              <a
-                key={stop.id}
-                href={`#${stop.id}`}
-                aria-label={stop.label}
-                aria-current={stop.id === current ? 'location' : undefined}
-                className="pointer-events-auto flex size-6 items-center justify-center"
-              >
-                <span
-                  className={cn(
-                    'block rounded-full bg-foreground transition-all',
-                    stop.id === current ? 'size-3' : 'size-2 opacity-50',
-                  )}
-                />
-              </a>
-            ))}
+            {/* A pale pill behind the dots, so they show against a dark scene too. */}
+            <div className="flex flex-col gap-1 rounded-full bg-background/70 py-2">
+              {TOUR_STOPS.map((stop) => (
+                <a
+                  key={stop.id}
+                  href={`#${stop.id}`}
+                  aria-label={stop.label}
+                  aria-current={stop.id === current ? 'location' : undefined}
+                  className="pointer-events-auto flex size-6 items-center justify-center"
+                >
+                  <span
+                    className={cn(
+                      'block rounded-full bg-foreground transition-all',
+                      stop.id === current ? 'size-3' : 'size-2 opacity-50',
+                    )}
+                  />
+                </a>
+              ))}
+            </div>
           </nav>
         </div>
       )}
