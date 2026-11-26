@@ -86,6 +86,16 @@ seed also refuses `PAYLOAD_DROP_DATABASE=true`. Set `E2E_ADMIN_EMAIL` and
 `E2E_ADMIN_PASSWORD` only for local or CI smoke tests. Never point the seed or
 Playwright release smoke test at production.
 
+## 3D scroll tour
+
+The homepage hero is the first stop of a scroll-driven 3D walk through the Lawrenceville brewery, shown on devices that can draw it. The brewery model is generated in [lolevbeer/hq](https://github.com/lolevbeer/hq) and copied here at a pinned commit:
+
+```bash
+node scripts/sync-hq-model.mjs ../hq <commit>   # rewrites lib/hq/lolev-model.js and public/3d/hq/
+```
+
+See "3D scroll tour" in `AGENTS.md` for the quality levels, the stops and the rules for changing it.
+
 ## Health check
 
 `GET /api/health` validates the server environment and pings MongoDB through

@@ -26,3 +26,14 @@ Current rules worth knowing: beer managers, bartenders, and lead bartenders read
 Next caps a page at the shortest `revalidate` of any cached read it makes, whatever the page exports, and the root layout's reads are on every page. Keep reads that carry cache tags at an hourly fallback; saves refresh them through the tags. That includes the event and food reads: they depend on the clock only by the Pittsburgh day, which is in their cache key. `tests/int/cache-lifetimes.int.spec.ts` guards this. A dynamic route only gets ISR with `generateStaticParams` (an empty array is enough); without it, `revalidate` does nothing and the route renders per request. `.next/prerender-manifest.json` shows what each route really got.
 
 Every public page also carries the `locations` tag through the root layout, so a location save invalidates the whole site. A save that only affects `/m` boards sets `context.kioskOnly` (see the revalidation plugin). Links rendered in lists, and links to heavy pages, use `prefetch={false}`: each stale prefetch regenerates that page on the server.
+
+# 3D scroll tour (homepage)
+
+The top of the homepage is a scroll-driven walk through the Lawrenceville brewery: `components/home/scroll-tour.tsx` wraps the hero and, after `load` plus an idle slot, adds four more stops and a WebGL scene (`components/home/tour-scene.ts`) holding the brewery model and the featured beer's can. The server's HTML is the plain homepage; the tour is added on the client only.
+
+- **The model is not written here.** `lib/hq/lolev-model.js` and `public/3d/hq/*.webp` are generated in `lolevbeer/hq` and copied at one commit by `node scripts/sync-hq-model.mjs <hq checkout> <commit>`; the file's first line names the commit. Never edit the copy. Its types, `lib/hq/lolev-model.d.ts`, are written by hand and change with a re-sync.
+- **three.js must match hq's version** (0.187), and loads only through dynamic imports. `tests/int/home-tour-loading.int.spec.ts` fails on a static import of `three`, the scene or the model from the homepage's files.
+- **Three levels** (`lib/tour/quality.ts`): `full` on desktops; `lite` on phones and low-memory devices (no mirrors, no area lights, half-size textures); `none` (no tour) without WebGL 2, with reduced motion or Save-Data. An average frame over 40 ms across the first 60 frames drops one level.
+- **Stops** are data in `lib/tour/stops.ts`: camera, can position (in the model's feet: x east, y up, z south), copy and link. `lib/tour/pose.ts` turns scroll position into a camera.
+- **Texture slots.** The model's lights and shadows leave a material four of a shader's 16 textures at `full`. The can's label has exactly four, and only without its bump map (`bump: false` in `tour-scene.ts`); a material with more maps does not draw, and three.js logs a shader error.
+- **The can** is the first of the first four hero beers with generated label textures (`src/app/(frontend)/page.tsx`); with none, there is no tour.
