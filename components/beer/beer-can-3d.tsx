@@ -5,7 +5,8 @@
  * (see ./can-scene) from the CMS-generated label textures and adds orbit
  * controls + auto-rotate (off under prefers-reduced-motion).
  *
- * Mounting is deferred until the window `load` event plus an idle slot, so
+ * Mounting is deferred until the window `load` event plus an idle slot
+ * (afterLoadAndIdle in lib/utils/after-load-and-idle), so
  * three.js and the label textures never compete with the flat poster image
  * (the page's LCP) or with hydration.
  *
@@ -13,32 +14,8 @@
  * for the single can on a beer page.
  */
 import { useEffect, useEffectEvent, useRef } from 'react'
+import { afterLoadAndIdle } from '@/lib/utils/after-load-and-idle'
 import { createCanScene } from './can-scene'
-
-/** Run `fn` once the page has loaded and the main thread is idle. Safari has
- *  no requestIdleCallback, so it falls back to a short timeout. Returns a
- *  cancel function. */
-function afterLoadAndIdle(fn: () => void): () => void {
-  let cancelIdle = () => {}
-  const schedule = () => {
-    if ('requestIdleCallback' in window) {
-      const id = window.requestIdleCallback(fn, { timeout: 2000 })
-      cancelIdle = () => window.cancelIdleCallback(id)
-    } else {
-      const id = setTimeout(fn, 200)
-      cancelIdle = () => clearTimeout(id)
-    }
-  }
-  if (document.readyState === 'complete') {
-    schedule()
-    return () => cancelIdle()
-  }
-  window.addEventListener('load', schedule, { once: true })
-  return () => {
-    window.removeEventListener('load', schedule)
-    cancelIdle()
-  }
-}
 
 interface BeerCan3DProps {
   /** URL of the generated label artwork PNG (beer.labelBase). */
