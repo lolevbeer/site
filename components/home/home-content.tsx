@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { HeroSection } from '@/components/home/hero-section';
+import { ScrollTour, type TourCan } from '@/components/home/scroll-tour';
 import { FeaturedBeers } from '@/components/home/featured-menu';
 import { QuickInfoCards } from '@/components/home/quick-info-cards';
 import { LocationCards } from '@/components/location/location-cards';
@@ -24,6 +25,8 @@ interface HomeContentProps {
   children: React.ReactNode;
   heroDescription?: React.ReactNode;
   heroImageUrl?: string | null;
+  /** Label textures of the beer whose can stands in the scroll tour; none, no tour. */
+  tourCan?: TourCan;
   weeklyHours?: Record<string, WeeklyHoursDay[]>;
 }
 
@@ -36,11 +39,22 @@ export function HomeContent({
   children,
   heroDescription,
   heroImageUrl,
+  tourCan,
   weeklyHours,
 }: HomeContentProps) {
   return (
     <div className="min-h-screen">
-      <HeroSection beers={heroBeers} heroDescription={heroDescription} heroImageUrl={heroImageUrl} />
+      {/* The hero is the first stop of the 3D scroll tour, which starts after load on capable devices. */}
+      <ScrollTour can={tourCan}>
+        {(sceneBehind) => (
+          <HeroSection
+            beers={heroBeers}
+            heroDescription={heroDescription}
+            heroImageUrl={heroImageUrl}
+            sceneBehind={sceneBehind}
+          />
+        )}
+      </ScrollTour>
 
       {/* Our Locations - right after hero */}
       <section className="py-16 lg:py-24 bg-background">

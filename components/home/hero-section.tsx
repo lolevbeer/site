@@ -21,9 +21,17 @@ interface HeroSectionProps {
   /** Homepage introduction, rendered by the server page (rich text or plain text). */
   heroDescription?: React.ReactNode
   heroImageUrl?: string | null
+  /** The scroll tour's 3D scene is drawn behind the hero (see scroll-tour.tsx):
+   *  the background image fades out and the scrim over it stays. */
+  sceneBehind?: boolean
 }
 
-export function HeroSection({ beers, heroDescription, heroImageUrl }: HeroSectionProps) {
+export function HeroSection({
+  beers,
+  heroDescription,
+  heroImageUrl,
+  sceneBehind = false,
+}: HeroSectionProps) {
   const [imageErrors, setImageErrors] = useState<Set<string>>(new Set())
   const handleImageError = (beerId: string) => {
     setImageErrors((prev) => new Set(prev).add(beerId))
@@ -32,7 +40,9 @@ export function HeroSection({ beers, heroDescription, heroImageUrl }: HeroSectio
   const displayBeers = beers.filter((beer) => !imageErrors.has(beer.id))
 
   return (
-    <div className="relative flex flex-col gap-8 md:gap-16 px-4 md:px-8 py-16 md:py-24 text-center min-h-[600px] md:min-h-[700px]">
+    // At least a screen tall, so the tour's stops, added below once the page has
+    // loaded, appear off screen and move nothing the visitor can see.
+    <div className="relative flex flex-col justify-center gap-8 md:gap-16 px-4 md:px-8 py-16 md:py-24 text-center min-h-[max(600px,100svh)] md:min-h-[max(700px,100svh)]">
       {/* Background image */}
       <div className="absolute inset-0 z-0">
         {heroImageUrl ? (
@@ -40,7 +50,7 @@ export function HeroSection({ beers, heroDescription, heroImageUrl }: HeroSectio
             src={heroImageUrl}
             alt="Interior view of Lolev Beer taproom showing bar area with craft beer taps"
             fill
-            className="object-cover object-center"
+            className={`object-cover object-center transition-opacity duration-700 ${sceneBehind ? 'opacity-0' : ''}`}
             priority
             fetchPriority="high"
             quality={70}
@@ -49,7 +59,10 @@ export function HeroSection({ beers, heroDescription, heroImageUrl }: HeroSectio
           <div className="w-full h-full bg-gradient-to-br from-amber-900/20 to-orange-800/30" />
         )}
         {/* Overlay for better text readability */}
-        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/70 to-background/50 backdrop-blur-[2px]" />
+        {/* No blur over the scene: blurring a canvas that redraws on scroll is costly on phones. */}
+        <div
+          className={`absolute inset-0 bg-gradient-to-t from-background via-background/70 to-background/50 ${sceneBehind ? '' : 'backdrop-blur-[2px]'}`}
+        />
       </div>
 
       <div className="relative z-10 flex flex-col items-center justify-center gap-6 md:gap-8">

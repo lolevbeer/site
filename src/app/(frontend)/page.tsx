@@ -11,7 +11,8 @@ import { generateLocalBusinessSchemas, generateOrganizationSchema, generateWebSi
 import { generateLocationMenuSchema } from '@/lib/utils/menu-schema';
 import { extractBeerFromMenuItem } from '@/lib/utils/menu-item-utils';
 import { getSiteSeo, siteDefaults } from '@/lib/utils/site-seo'
-import { getAllLocations } from '@/lib/utils/payload-api'
+import { getAllLocations, getBeerBySlug } from '@/lib/utils/payload-api'
+import { getMediaUrl, textureImageUrl } from '@/lib/utils/media-utils'
 import { buildPageMetadata } from '@/lib/seo/resolve-metadata'
 import { selectHeroBeers, toHomeMenu } from '@/lib/utils/public-client-payloads'
 import { buildMarketingCopy } from '@/lib/utils/marketing-copy'
@@ -88,6 +89,18 @@ export default async function Home(): Promise<React.ReactElement> {
   const homeCansMenus = Object.values(homeCansMenusByLocation).filter((m): m is Menu => m !== null);
   const heroBeers = selectHeroBeers(data.availableBeers, homeCansMenus);
 
+  // The can in the scroll tour: the first hero beer with generated 3D label
+  // textures. Menus leave those fields out (MENU_BEERS_POPULATE), so the beers
+  // are read the way their own pages read them, from the same cache entries.
+  // ponytail: looks at the first four hero beers only; none with textures, no tour.
+  const tourBeers = await Promise.all(heroBeers.slice(0, 4).map((beer) => getBeerBySlug(beer.slug)));
+  const tourBase = tourBeers
+    .map((beer) => ({ base: textureImageUrl(getMediaUrl(beer?.labelBase)), beer }))
+    .find((entry) => entry.base);
+  const tourCan = tourBase?.base
+    ? { base: tourBase.base, metalness: textureImageUrl(getMediaUrl(tourBase.beer?.labelMetalness)) }
+    : undefined;
+
   return (
     <>
       {/* JSON-LD structured data for SEO */}
@@ -121,6 +134,7 @@ export default async function Home(): Promise<React.ReactElement> {
 
         <HomeContent
           heroBeers={heroBeers}
+          tourCan={tourCan}
           draftMenus={homeDraftMenus}
           beerCount={data.beerCount}
           cansCount={data.cansCount}
