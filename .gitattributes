@@ -10,3 +10,7 @@ public/favicon.ico !filter !diff !merge
 # The social card is referenced by og:image and JSON-LD, so it must be a real
 # JPEG in the git checkout; Vercel doesn't pull LFS objects (project gitLFS is off).
 public/images/beer/og-image.jpg !filter !diff !merge
+
+# The brewery model's photos (scripts/sync-hq-model.mjs) are loaded by the
+# homepage tour straight from the deploy, which gets no LFS objects (see above).
+public/3d/hq/** !filter !diff !merge
