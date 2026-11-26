@@ -1,5 +1,6 @@
 import { withPayload } from '@payloadcms/next/withPayload'
 import { withSentryConfig } from '@sentry/nextjs'
+import { IMAGE_DEVICE_SIZES, IMAGE_SIZES } from './lib/config/image-sizes.mjs'
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -45,8 +46,9 @@ const nextConfig = {
     // them every 4 hours.
     // ponytail: a Blob file replaced under the same name shows the old image for up to 31 days.
     minimumCacheTTL: 2_678_400,
-    // Next's default is 8 widths. 2560 still covers full-bleed images on retina laptops.
-    deviceSizes: [640, 828, 1200, 1920, 2560],
+    // 5 widths instead of Next's 8; src/proxy.ts sends the retired ones here.
+    deviceSizes: IMAGE_DEVICE_SIZES,
+    imageSizes: IMAGE_SIZES,
     remotePatterns: [
       {
         protocol: 'http',

@@ -13,33 +13,29 @@ import { logger } from '@/lib/utils/logger'
 import { ORG_DESCRIPTION } from '@/lib/utils/seo'
 import { formatPhoneLines } from '@/lib/utils/llms-now'
 import { loadPouringNow } from '@/lib/utils/llms-now-data'
+import { crawlerCacheControl } from '@/lib/seo/crawler-route'
 
-export const revalidate = 3600 // Revalidate every hour
+// Renders on request behind the CDN; as an ISR route it froze at deploy time.
+export const dynamic = 'force-dynamic'
 
 export async function GET() {
   const baseUrl = getBaseUrl()
 
-  let beers: Awaited<ReturnType<typeof getAllBeersFromPayload>> = []
-  let cmsFAQs: Awaited<ReturnType<typeof getActiveFAQs>> = []
-  let locations: Awaited<ReturnType<typeof getAllLocations>> = []
-
-  try {
-    beers = await getAllBeersFromPayload()
-  } catch (error) {
-    logger.error('Error fetching beers for llms-full.txt:', error)
-  }
-
-  try {
-    cmsFAQs = await getActiveFAQs()
-  } catch (error) {
-    logger.error('Error fetching FAQs for llms-full.txt:', error)
-  }
-
-  try {
-    locations = await getAllLocations()
-  } catch (error) {
-    logger.error('Error fetching locations for llms-full.txt:', error)
-  }
+  // Independent reads, in parallel: this runs on every CDN miss. A failed one
+  // leaves its section empty rather than failing the file, and that copy is
+  // not cached.
+  let complete = true
+  const orNone = <T>(source: Promise<T[]>, name: string) =>
+    source.catch((error) => {
+      logger.error(`Error fetching ${name} for llms-full.txt:`, error)
+      complete = false
+      return [] as T[]
+    })
+  const [beers, cmsFAQs, locations] = await Promise.all([
+    orNone(getAllBeersFromPayload(), 'beers'),
+    orNone(getActiveFAQs(), 'FAQs'),
+    orNone(getAllLocations(), 'locations'),
+  ])
 
   // Filter visible beers and sort by name
   const visibleBeers = beers
@@ -139,7 +135,7 @@ Our taprooms offer a curated selection of our freshest draft beers and canned of
   return new NextResponse(content, {
     headers: {
       'Content-Type': 'text/plain; charset=utf-8',
-      'Cache-Control': 'public, max-age=3600, s-maxage=3600',
+      'Cache-Control': crawlerCacheControl(complete),
     },
   })
 }

@@ -1,6 +1,4 @@
 import { cache } from 'react'
-import { getPayload } from 'payload'
-import config from '@/src/payload.config'
 import { LiveEvents } from '@/components/events/live-events'
 import { notFound } from 'next/navigation'
 import { findLocationBySlug } from '@/lib/config/locations'
@@ -11,6 +9,7 @@ import {
   getUpcomingEventsFromPayload,
   transformPayloadEventToBreweryEvent,
   extractVendorInfo,
+  getAllLocations,
 } from '@/lib/utils/payload-api'
 import type { PayloadMenu } from '@/lib/utils/payload-api'
 import { LIVE_DISPLAY_META, NOINDEX_ROBOTS, pageOpenGraph } from '@/lib/utils/seo'
@@ -41,70 +40,65 @@ export interface FoodItem {
  * Fetch events, food, and cans menu for a specific location.
  * Wrapped with React cache() to deduplicate between generateMetadata and page render.
  */
-const getDataByLocation = cache(async (locationSlug: string): Promise<{
-  events: BreweryEvent[]
-  food: FoodItem[]
-  cansMenu: PayloadMenu | null
-  locationName: string
-  /** Current slug, even when the request used an alias. */
-  locationSlug: string
-} | null> => {
-  const payload = await getPayload({ config })
-  const key = locationSlug.toLowerCase()
+const getDataByLocation = cache(
+  async (
+    locationSlug: string,
+  ): Promise<{
+    events: BreweryEvent[]
+    food: FoodItem[]
+    cansMenu: PayloadMenu | null
+    locationName: string
+    /** Current slug, even when the request used an alias. */
+    locationSlug: string
+  } | null> => {
+    const key = locationSlug.toLowerCase()
 
-  // Match the current slug or a former one: TV kiosks bookmarked before a
-  // rename keep rendering the board (no redirect). A slug beats an alias.
-  const locationResult = await payload.find({
-    collection: 'locations',
-    where: {
-      or: [{ slug: { equals: key } }, { aliases: { in: [key] } }],
-    },
-    limit: 2,
-    overrideAccess: false,
-  })
+    // Match the current slug or a former one: TV kiosks bookmarked before a
+    // rename keep rendering the board (no redirect). A slug beats an alias.
+    // The cached list, so the board's 60-second regeneration skips Mongo.
+    const location = findLocationBySlug(await getAllLocations(), key)
+    if (!location?.slug) {
+      return null
+    }
+    const slug = location.slug
 
-  const location = findLocationBySlug(locationResult.docs, key)
-  if (!location?.slug) {
-    return null
-  }
-  const slug = location.slug
+    // Fetch events, food (individual + recurring), and cans menu in parallel
+    const [eventDocs, combinedFood, cansMenu] = await Promise.all([
+      getUpcomingEventsFromPayload(slug, 20),
+      getCombinedUpcomingFood(slug, 20),
+      getCansMenu(slug),
+    ])
 
-  // Fetch events, food (individual + recurring), and cans menu in parallel
-  const [eventDocs, combinedFood, cansMenu] = await Promise.all([
-    getUpcomingEventsFromPayload(slug, 20),
-    getCombinedUpcomingFood(slug, 20),
-    getCansMenu(slug),
-  ])
+    const events: BreweryEvent[] = eventDocs.map((event) =>
+      transformPayloadEventToBreweryEvent(event, slug, location.name),
+    )
 
-  const events: BreweryEvent[] = eventDocs.map((event) =>
-    transformPayloadEventToBreweryEvent(event, slug, location.name),
-  )
+    const food: FoodItem[] = combinedFood.map((entry) => {
+      const { name, site, logoUrl } = extractVendorInfo(entry.vendor)
+      const dateStr = typeof entry.date === 'string' ? entry.date.split('T')[0] : entry.date
+      const time =
+        ('startTime' in entry ? entry.startTime : 'time' in entry ? entry.time : undefined) ??
+        undefined
 
-  const food: FoodItem[] = combinedFood.map((entry) => {
-    const { name, site, logoUrl } = extractVendorInfo(entry.vendor)
-    const dateStr = typeof entry.date === 'string' ? entry.date.split('T')[0] : entry.date
-    const time =
-      ('startTime' in entry ? entry.startTime : 'time' in entry ? entry.time : undefined) ??
-      undefined
+      return {
+        id: typeof entry.id === 'string' ? entry.id : String(entry.id),
+        vendor: name || 'Unknown',
+        date: dateStr,
+        time: time,
+        site,
+        logoUrl,
+      }
+    })
 
     return {
-      id: typeof entry.id === 'string' ? entry.id : String(entry.id),
-      vendor: name || 'Unknown',
-      date: dateStr,
-      time: time,
-      site,
-      logoUrl,
+      events,
+      food,
+      cansMenu,
+      locationName: location.name,
+      locationSlug: slug,
     }
-  })
-
-  return {
-    events,
-    food,
-    cansMenu,
-    locationName: location.name,
-    locationSlug: slug,
-  }
-})
+  },
+)
 
 export default async function EventsDisplayPage({ params }: EventsDisplayPageProps) {
   const { location } = await params

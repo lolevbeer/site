@@ -109,3 +109,19 @@ describe('generateBeerListSchema', () => {
   })
 })
 
+
+describe('generateProductSchema description', () => {
+  it('keeps the staff-written description', () => {
+    const schema = generateProductSchema(beer({ name: 'Akko', slug: 'akko', description: ' Bright and juicy. ' }))
+    expect(schema.description).toBe('Bright and juicy.')
+  })
+
+  it('describes the beer from its facts when staff wrote nothing', () => {
+    const schema = generateProductSchema(
+      beer({ name: 'Monarch', slug: 'monarch', abv: 5, style: { name: 'Dry Hopped Pilsner' }, hops: 'Saaz' } as Partial<BeerInput>),
+    )
+    expect(schema.description).toBe(
+      'Monarch is a 5% Dry Hopped Pilsner brewed by Lolev Beer in Pittsburgh, hopped with Saaz.',
+    )
+  })
+})

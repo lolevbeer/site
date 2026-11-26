@@ -2,7 +2,8 @@
  * Public pages read Payload as an anonymous visitor. Each public read must pass
  * `overrideAccess: false` explicitly (see AGENTS.md, Access control) so
  * collection access rules always apply.
- * Covers lib/jobs, /food, and /e/[location]. (Recurring food state reads are
+ * Covers lib/jobs and /food; /e/[location] reads locations through
+ * getAllLocations. (Recurring food state reads are
  * covered in recurring-food-state.int.spec.ts.)
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -93,9 +94,13 @@ describe('public reads pass overrideAccess: false', () => {
     expect(findArgs('food-vendors').overrideAccess).toBe(false)
   })
 
-  it('/e/[location] location lookup', async () => {
+  it('/e/[location] looks locations up through the cached anonymous list', async () => {
+    const { getAllLocations } = await import('@/lib/utils/payload-api')
+    // The /food test above calls it too; count only this page's call.
+    vi.mocked(getAllLocations).mockClear()
     await eventsDisplayMetadata({ params: Promise.resolve({ location: 'lawrenceville' }) })
-    expect(findArgs('locations').overrideAccess).toBe(false)
+    expect(getAllLocations).toHaveBeenCalled()
+    expect(find.mock.calls.some(([args]) => args.collection === 'locations')).toBe(false)
   })
 })
 
@@ -129,4 +134,11 @@ it('the rendered food page includes UTC-midnight calendar entries and their save
       ]),
     }),
   )
+})
+
+it('the food page fails its render instead of caching an empty schedule when Payload is down', async () => {
+  // A thrown render keeps the last good ISR page; returning [] would cache an
+  // empty schedule for an hour.
+  find.mockRejectedValueOnce(new Error('connect ECONNREFUSED'))
+  await expect(FoodPage()).rejects.toThrow('ECONNREFUSED')
 })

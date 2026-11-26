@@ -8,6 +8,7 @@ import {
   getAllBeersFromPayload,
   getAllLocations,
   getAllUpcomingEventsFromPayload,
+  getHallOfFameReviews,
 } from '@/lib/utils/payload-api'
 import { logger } from '@/lib/utils/logger'
 import { getBaseUrl } from '@/lib/utils/get-base-url'
@@ -75,23 +76,38 @@ type StaticPage = {
   priority: number
 }
 
-/** Log a failed source and continue with none, so one outage cannot empty the whole sitemap. */
-const orEmpty = <T>(source: Promise<T[]>, name: string) =>
-  source.catch((error) => {
-    logger.error(`Error fetching ${name} for sitemap:`, error)
-    return [] as T[]
-  })
+export interface SitemapResult {
+  entries: MetadataRoute.Sitemap
+  /** False when a read failed and its pages are missing; the route then skips the CDN cache. */
+  complete: boolean
+}
 
-export async function getSitemapEntries(): Promise<MetadataRoute.Sitemap> {
+export async function getSitemapEntries(): Promise<SitemapResult> {
   const baseUrl = getBaseUrl()
-  const [siteSeo, beers, locations, jobs, events] = await Promise.all([
+  let complete = true
+  /** Log a failed source and continue with `fallback`, so one outage cannot empty the whole sitemap. */
+  const orElse = <T>(source: Promise<T>, name: string, fallback: T) =>
+    source.catch((error) => {
+      logger.error(`Error fetching ${name} for sitemap:`, error)
+      complete = false
+      return fallback
+    })
+  const [siteSeo, beers, locations, jobs, events, hasHallOfFame] = await Promise.all([
+    // Never rejects: a failed SEO read resolves {}, which lists every page.
     getSiteSeo(),
-    orEmpty(getAllBeersFromPayload(), 'beers'),
-    orEmpty(getAllLocations(), 'locations'),
-    orEmpty(getActiveJobs(), 'jobs'),
+    orElse(getAllBeersFromPayload(), 'beers', []),
+    orElse(getAllLocations(), 'locations', []),
+    orElse(getActiveJobs(), 'jobs', []),
     // Same call as the /events page, so the sitemap lists exactly what it lists:
     // upcoming public one-offs and recurring occurrences, private ones excluded.
-    orEmpty(getAllUpcomingEventsFromPayload(100), 'events'),
+    orElse(getAllUpcomingEventsFromPayload(100), 'events', []),
+    // An empty Hall of Fame is a thin page; list it once a review is ticked.
+    // If the read fails, keep listing it rather than guess.
+    orElse(
+      getHallOfFameReviews().then((reviews) => reviews.length > 0),
+      'Hall of Fame reviews',
+      true,
+    ),
   ])
 
   const visibleBeers = beers.filter((beer) => beer.slug && !beer.hideFromSite)
@@ -122,7 +138,10 @@ export async function getSitemapEntries(): Promise<MetadataRoute.Sitemap> {
   ]
   const staticPages: MetadataRoute.Sitemap = staticEntries
     // Hub SEO groups have no canonical field, so noIndex is the only thing that can hide them.
-    .filter((page) => !siteSeo.pages?.[page.key]?.noIndex)
+    .filter(
+      (page) =>
+        !siteSeo.pages?.[page.key]?.noIndex && (page.path !== '/hall-of-fame' || hasHallOfFame),
+    )
     .map(({ path, changeFrequency, priority, lastModified }) => ({
       url: path === '/' ? baseUrl : `${baseUrl}${path}`,
       lastModified,
@@ -167,5 +186,8 @@ export async function getSitemapEntries(): Promise<MetadataRoute.Sitemap> {
         priority: 0.6,
       }))
 
-  return [...staticPages, ...beerPages, ...locationPages, ...jobPages, ...eventPages]
+  return {
+    entries: [...staticPages, ...beerPages, ...locationPages, ...jobPages, ...eventPages],
+    complete,
+  }
 }

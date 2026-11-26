@@ -13,6 +13,7 @@ import { HallOfFameCard } from '@/components/reviews/hall-of-fame-card'
 import { PageTransition } from '@/components/motion'
 import { getHallOfFameReviews } from '@/lib/utils/payload-api'
 import { buildPageMetadata } from '@/lib/seo/resolve-metadata'
+import { NOINDEX_FOLLOW_ROBOTS } from '@/lib/utils/seo'
 
 // ISR: revalidate every hour; review saves also revalidate this path.
 export const revalidate = 3600
@@ -20,13 +21,19 @@ export const revalidate = 3600
 const HALL_OF_FAME_DESCRIPTION = 'Our favorite things people have said about Lolev beer on Untappd.'
 
 export async function generateMetadata(): Promise<Metadata> {
-  return buildPageMetadata({
-    fallbackTitle: 'Hall of Fame',
-    fallbackDescription: HALL_OF_FAME_DESCRIPTION,
-    canonicalPath: '/hall-of-fame',
-    fallbackKeywords: ['Lolev Beer reviews', 'Untappd reviews', 'Pittsburgh brewery'],
-    hubKey: 'hallOfFame',
-  })
+  const [metadata, reviews] = await Promise.all([
+    buildPageMetadata({
+      fallbackTitle: 'Hall of Fame',
+      fallbackDescription: HALL_OF_FAME_DESCRIPTION,
+      canonicalPath: '/hall-of-fame',
+      fallbackKeywords: ['Lolev Beer reviews', 'Untappd reviews', 'Pittsburgh brewery'],
+      hubKey: 'hallOfFame',
+    }),
+    getHallOfFameReviews().catch(() => null),
+  ])
+  // Until a review is ticked the page is a heading and "No reviews here yet":
+  // keep it out of search (the sitemap leaves it out too) but let links be followed.
+  return reviews?.length === 0 ? { ...metadata, robots: NOINDEX_FOLLOW_ROBOTS } : metadata
 }
 
 export default async function HallOfFamePage() {

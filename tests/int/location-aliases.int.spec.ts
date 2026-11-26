@@ -248,23 +248,13 @@ describe('shared resolver', () => {
 
 describe('routes', () => {
   it('/e/<alias> renders the board for the current slug (no redirect)', async () => {
-    find.mockResolvedValue({ docs: [lawrenceville] })
     const element = await EventsDisplayPage({
       params: Promise.resolve({ location: 'old-lawrenceville' }),
     })
     expect(permanentRedirect).not.toHaveBeenCalled()
-    expect(find).toHaveBeenCalledWith(
-      expect.objectContaining({
-        collection: 'locations',
-        overrideAccess: false,
-        where: {
-          or: [
-            { slug: { equals: 'old-lawrenceville' } },
-            { aliases: { in: ['old-lawrenceville'] } },
-          ],
-        },
-      }),
-    )
+    // Resolved from the cached location list, not a per-render Mongo query.
+    expect(getAllLocations).toHaveBeenCalled()
+    expect(find).not.toHaveBeenCalled()
     expect((element as { props: { location: string } }).props.location).toBe('lolev-lawrenceville')
   })
 

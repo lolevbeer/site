@@ -8,6 +8,7 @@ vi.mock('@/lib/utils/payload-api', () => ({
   getAllBeersFromPayload: vi.fn(),
   getAllLocations: vi.fn(),
   getAllUpcomingEventsFromPayload: vi.fn(),
+  getHallOfFameReviews: vi.fn(async () => [{ id: 'review-1' }]),
 }))
 
 vi.mock('@/lib/jobs/payload', () => ({
@@ -22,20 +23,23 @@ vi.mock('@/lib/utils/logger', () => ({
   logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn() },
 }))
 
-import { getSitemapEntries as sitemap } from '@/lib/seo/sitemap-entries'
-import { GET, revalidate } from '@/src/app/sitemap.xml/route'
+import { getSitemapEntries } from '@/lib/seo/sitemap-entries'
+import { GET, dynamic } from '@/src/app/sitemap.xml/route'
 import { getSiteSeo } from '@/lib/utils/site-seo'
 import { getActiveJobs } from '@/lib/jobs/payload'
 import {
   getAllBeersFromPayload,
   getAllLocations,
   getAllUpcomingEventsFromPayload,
+  getHallOfFameReviews,
 } from '@/lib/utils/payload-api'
 
 const beers = getAllBeersFromPayload as ReturnType<typeof vi.fn>
 const locations = getAllLocations as ReturnType<typeof vi.fn>
 const jobs = getActiveJobs as ReturnType<typeof vi.fn>
 const events = getAllUpcomingEventsFromPayload as ReturnType<typeof vi.fn>
+
+const sitemap = async () => (await getSitemapEntries()).entries
 
 const ONE_OFF_ID = '6650a1b2c3d4e5f6a7b8c9d0'
 const RECURRING_ID = 'recurring-6650a1b2c3d4e5f6a7b8c9d1-2026-11-14'
@@ -152,23 +156,45 @@ describe('sitemap', () => {
     expect((catalog?.lastModified as Date).toISOString()).toBe('2026-10-09T03:00:00.000Z')
   })
 
-  it('regenerates hourly instead of staying frozen at build time', () => {
-    expect(revalidate).toBe(3600)
+  // As an ISR route (revalidate = 3600) it still froze at deploy time on Vercel,
+  // so it renders on request and the CDN keeps each copy for an hour.
+  it('renders on request instead of staying frozen at build time', () => {
+    expect(dynamic).toBe('force-dynamic')
+  })
+
+  it('is not cached when a read failed and its pages are missing', async () => {
+    events.mockRejectedValueOnce(new Error('db down'))
+    const response = await GET()
+    expect(response.headers.get('Cache-Control')).toBe('no-store')
+    expect(await response.text()).toContain('<loc>https://lolev.beer/beer/lupula</loc>')
   })
 
   // A sitemap.ts metadata route was served like a static file on Vercel, so it
-  // never refreshed. This route keeps the shape of feed.xml, which does.
+  // never refreshed. No stale-while-revalidate: it handed crawlers a day-old copy.
   it('serves the entries as sitemap XML with a CDN lifetime', async () => {
     const response = await GET()
     const xml = await response.text()
 
     expect(response.headers.get('Content-Type')).toBe('application/xml; charset=utf-8')
     expect(response.headers.get('Cache-Control')).toContain('s-maxage=3600')
+    expect(response.headers.get('Cache-Control')).not.toContain('stale-while-revalidate')
     expect(xml.startsWith('<?xml version="1.0" encoding="UTF-8"?>')).toBe(true)
     expect(xml).toContain('<loc>https://lolev.beer/beer/lupula</loc>')
     expect(xml).toContain('<lastmod>2026-10-09T03:00:00.000Z</lastmod>')
     expect(xml).toContain('<changefreq>weekly</changefreq>')
     expect(xml).toContain('<priority>0.7</priority>')
+  })
+
+  it('leaves out the Hall of Fame until a review is on it', async () => {
+    const hallOfFame = getHallOfFameReviews as ReturnType<typeof vi.fn>
+    const listed = async () =>
+      (await sitemap()).some((e) => e.url === 'https://lolev.beer/hall-of-fame')
+
+    expect(await listed()).toBe(true)
+    hallOfFame.mockResolvedValueOnce([])
+    expect(await listed()).toBe(false)
+    hallOfFame.mockRejectedValueOnce(new Error('db down'))
+    expect(await listed()).toBe(true)
   })
 
   it('escapes URLs', async () => {
